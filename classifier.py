@@ -15,7 +15,7 @@ from urllib.parse import urljoin
 from bs4 import BeautifulSoup
 from time import sleep
 
-from .Installation_Type_Dictionary import Installations
+from app.src.Installation_Type_Dictionary import Installations
 
 class Report:
     
@@ -111,7 +111,7 @@ def get_all_pdf_link_on_url(pages):
                 pass
     else:
             print("An error has occured, and it is most likely because the Internt connection")
-    print(url_to_reports)
+    #print(url_to_reports)
     return url_to_reports
 
 def find_url_to_all_reportpages():
@@ -401,102 +401,8 @@ def find_relevant_info_on_web(webpage_as_soup, report):
     #print("")
 
 
-"""
-Functions for writing the excel sheet
-"""
 
-   ## Function for opening the excel sheet one wishes to write to
-def open_excel_sheet(path):
-    
-    wb = openpyxl.load_workbook(path)
-    ws = wb.active
-    
-    return wb, ws
-
-## Function for finding the next row for filling in a finding
-def find_next_row(ws):
-    
-    for next_row, row in enumerate(ws['B'], 1):
-        if (row.value == None) and (next_row > 17):
-            break
-            
-    if len(ws['B']) == next_row:
-        next_row += 1
-    
-    return next_row
-
-## Function for filling in all the findings from all the new reports
-def fill_in_database(filename, list_of_reports):
-        
-    wb, ws = open_excel_sheet(filename)
-    next_row = find_next_row(ws)
-    
-    for report in list_of_reports:
-        
-        tilsyn_id =  ws[next_row - 1][2].value + 1
-        
-        for deviation in report.deviation_list:
-            
-            finding_id = ws[next_row - 1][1].value + 1
-            ws.cell(column = 2, row = next_row, value = finding_id)
-            ws.cell(column = 3, row = next_row, value = tilsyn_id)
-            ws.cell(column = 5, row = next_row, value = finding_id)
-            ws.cell(column = 8, row = next_row, value = report.installation_name)
-            ws.cell(column = 9, row = next_row, value = report.installation_type)
-            #ws.cell(column = 10, row = next_row, value = report.authority)
-            ws.cell(column = 11, row = next_row, value = report.year)
-            ws.cell(column = 12, row = next_row, value = report.date)
-            ws.cell(column = 13, row = next_row, value = report.activity_number)
-            ws.cell(column = 14, row = next_row, value = report.title)
-            ws.cell(column = 16, row = next_row, value = report.taskleader)
-            ws.cell(column = 17, row = next_row, value = report.participants_in_revision)
-            ws.cell(column = 18, row = next_row, value = report.count_participants)
-            ws.cell(column = 19, row = next_row, value = report.url)
-            ws.cell(column = 21, row = next_row, value = len(report.deviation_list))
-            ws.cell(column = 22, row = next_row, value = len(report.improvement_list))
-            
-            ws.cell(column = 24, row = next_row, value = deviation.finding_type)
-            ws.cell(column = 25, row = next_row, value = deviation.title)
-            ws.cell(column = 26, row = next_row, value = deviation.description)
-            ws.cell(column = 27, row = next_row, value = deviation.regulations)
-            #ws.cell(column = 29, row = next_row, value = deviation.kategori)
-            
-            next_row += 1
-            
-        for improvement in report.improvement_list:
-            
-            finding_id = ws[next_row - 1][1].value + 1
-            ws.cell(column = 2, row = next_row, value = finding_id)
-            ws.cell(column = 3, row = next_row, value = tilsyn_id)
-            ws.cell(column = 5, row = next_row, value = finding_id)
-            ws.cell(column = 8, row = next_row, value = report.installation_name)
-            ws.cell(column = 9, row = next_row, value = report.installation_type)
-            #ws.cell(column = 10, row = next_row, value = report.authority)
-            ws.cell(column = 11, row = next_row, value = report.year)
-            ws.cell(column = 12, row = next_row, value = report.date)
-            ws.cell(column = 13, row = next_row, value = report.activity_number)
-            ws.cell(column = 14, row = next_row, value = report.title)
-            ws.cell(column = 16, row = next_row, value = report.taskleader)
-            ws.cell(column = 17, row = next_row, value = report.participants_in_revision)
-            ws.cell(column = 18, row = next_row, value = report.count_participants)
-            ws.cell(column = 19, row = next_row, value = report.url)
-            ws.cell(column = 21, row = next_row, value = len(report.deviation_list))
-            ws.cell(column = 22, row = next_row, value = len(report.improvement_list))
-            
-            ws.cell(column = 24, row = next_row, value = improvement.finding_type)
-            ws.cell(column = 25, row = next_row, value = improvement.title)
-            ws.cell(column = 26, row = next_row, value = improvement.description)
-            ws.cell(column = 27, row = next_row, value = improvement.regulations)
-            #ws.cell(column = 29, row = next_row, value = improvement.kategori)
-            
-            next_row += 1
-            
-    wb.save(filename)
-
-    """Horrible main() that could be cleaned up"""
-
-
-def main(url):
+def main():
     print("Running main()")    
     ## INSERT HERE:Function() for going through 'https://www.ptil.no/tilsyn/tilsynsrapporter//GetData?pageindex=0&pagesize=10000'
     ## -webpage, and making a list of all the urls for new reports that are not in the excel database yet
@@ -547,27 +453,13 @@ def main(url):
         ## Append new finding to list
     report_list.append(report)
 
-    # converts the list to a pandas dataframe to make it easier to transform the
-    # data to a JSON  
-    import pandas as pd
-    #report_df = pd.DataFrame(report_list)
-    #report_df.to_json(orient='split')
-    with open('listfile.txt', 'w') as filehandle:
-        for listitem in report_list:
-            filehandle.write('%s\n' % listitem)
-
-    ## Write everything to file
-    # NB!!! FOR SOME REASON, IT IS NOT POSSIBLE TO WRITE TO ORIGNAL TILSYSRAPPORT WE WERE PROVIDED(?) THE FILE GETS CORRUPCTED.
-    ## WE HAD TO MAKE A SIMPLIFIED VERSION, WHERE WRITING WORKED FINE!
-    #fill_in_database((r'C:\\Users\\HANNORU\source\\Machine learning summer project\\Tilsynsdatabase_revised_simplified.xlsx'), report_list)
-    
-
-    print("Successfully written database")
+  
+    #print("Successfully written database")
     
    
     # ## Printing the extracted information from the report
-    print("URL for pdf:")
-    print(report.url)
+    #print("URL for pdf:")
+    #print(report.url)
     report_list.append(report.url)
     report_list.append(report.activity_number)
     report_list.append(report.title)
@@ -580,26 +472,28 @@ def main(url):
     for test_dev in report.deviation_list:
         report_list.append("Tittel på avvik:")
         report_list.append(test_dev.title)
-        print("")
-        print("Avvikets beskrivende tekst:")
-        print(test_dev.description)
-        print("")
-        print("Alle regelhenvisninger:")
-        print(test_dev.regulations)
-        print("----")
+        #print("")
+        report_list.append("Avvikets beskrivende tekst:")
+        report_list.append(test_dev.description)
+        #print("")
+        report_list.append("Alle regelhenvisninger:")
+        report_list.append(test_dev.regulations)
+        #print("----")
 
+   
+    for test_imp in report.improvement_list:
+        report_list.append("Tittel på forbedringspunkt:")
+        report_list.append(test_imp.title)
+    #     print("")
+        report_list.append("Avvikets beskrivende tekst:")
+        report_list.append(test_imp.description)
+    #     print("")
+        report_list.append("Alle regelhenvisninger:")
+        report_list.append(test_imp.regulations)
+    #     print("----")
     import pandas as pd
     df =  pd.DataFrame(report_list)
-    df.to_json("./file.json")
-    # for test_imp in report.improvement_list:
-    #     print("Tittel på forbedringspunkt:")
-    #     print(test_imp.title)
-    #     print("")
-    #     print("Avvikets beskrivende tekst:")
-    #     print(test_imp.description)
-    #     print("")
-    #     print("Alle regelhenvisninger:")
-    #     print(test_imp.regulations)
-    #     print("----")
+    df = df.to_json()
+    
     return df #returns the df as a json
 

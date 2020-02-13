@@ -1,16 +1,16 @@
-from flask import Flask, jsonify
+import test
+import classifier
+from flask import Flask, request, jsonify
 from flask_restful import Resource, Api
-from app.src import ExcelReader_and_Classifier_testing
-
 
 app = Flask(__name__)
 api = Api(app)
 
-class Classifier(Resource):
+class sumNumbers(Resource):
     def get(self):
-        return jsonify(ExcelReader_and_Classifier_testing)
-api.add_resource(Classifier, '/')
+        return {'data' : classifier.main()}
+
+api.add_resource(sumNumbers, '/classification/')
 
 if __name__ == '__main__':
-    app.run(debug=True)
-   
+    app.run(debug=True, port=5050)
