@@ -461,9 +461,9 @@ def main():
     #print("URL for pdf:")
     #print(report.url)
     #report_list.append("Report URL:")
-    report_list.append(report.url)
+    #report_list.append(report.url)
     # report_list.append("activity_number:")
-    report_list.append(report.activity_number)
+    #report_list.append(report.activity_number)
     #report_list.append(report.title)
     # report_list.append(report.date)
     # report_list.append(report.taskleader)
@@ -504,11 +504,18 @@ def main():
     activity_number = json.dumps(report.activity_number)
     title = json.dumps(report.title)
     date = json.dumps(report.date)
-   
+    taskleader = json.dumps(report.taskleader)
+    participants_in_revision = json.dumps(report.participants_in_revision)
+    installation_name = json.dumps(report.installation_name)
+    installation_type = json.dumps(report.installation_type)
     return {
         "url": url, 
         "activity_number" :activity_number,
         "title" : title,
-        "date" : date
-    } #returns the df as a json
+        "date" : date,
+        "taskleader" : taskleader,
+        "participants_in_revision" : participants_in_revision,
+        "installation_name" : installation_name,
+        "installation_type" : installation_type
+    } #returns the results as a json
 
