@@ -8,7 +8,7 @@ api = Api(app)
 
 class sumNumbers(Resource):
     def get(self):
-        return jsonify(classifier.main())
+        return classifier.main()
 
 api.add_resource(sumNumbers, '/classification/')
 
