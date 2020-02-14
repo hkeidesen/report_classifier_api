@@ -503,11 +503,12 @@ def main():
     url = json.dumps(report.url)
     activity_number = json.dumps(report.activity_number)
     title = json.dumps(report.title)
-
+    date = json.dumps(report.date)
    
     return {
         "url": url, 
         "activity_number" :activity_number,
         "title" : title,
+        "date" : date
     } #returns the df as a json
 
