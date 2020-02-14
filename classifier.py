@@ -451,7 +451,7 @@ def main():
         ## choice, then predicts the cathegories. Maybe require human assistance if classification % is less than a threshold
         
         ## Append new finding to list
-    report_list.append(report)
+    #report_list.append(report)
 
   
     #print("Successfully written database")
@@ -460,40 +460,54 @@ def main():
     # ## Printing the extracted information from the report
     #print("URL for pdf:")
     #print(report.url)
+    #report_list.append("Report URL:")
     report_list.append(report.url)
+    # report_list.append("activity_number:")
     report_list.append(report.activity_number)
-    report_list.append(report.title)
-    report_list.append(report.date)
-    report_list.append(report.taskleader)
-    report_list.append(report.participants_in_revision)
-    report_list.append(report.installation_name)
-    report_list.append(report.installation_type)
-
-    for test_dev in report.deviation_list:
-        report_list.append("Tittel på avvik:")
-        report_list.append(test_dev.title)
-        #print("")
-        report_list.append("Avvikets beskrivende tekst:")
-        report_list.append(test_dev.description)
-        #print("")
-        report_list.append("Alle regelhenvisninger:")
-        report_list.append(test_dev.regulations)
-        #print("----")
+    #report_list.append(report.title)
+    # report_list.append(report.date)
+    # report_list.append(report.taskleader)
+    # report_list.append(report.participants_in_revision)
+    # report_list.append(report.installation_name)
+    # report_list.append(report.installation_type)
+   
+    # for test_dev in report.deviation_list:
+    #     report_list.append("Tittel på avvik:")
+    #     report_list.append(test_dev.title)
+    #     #print("")
+    #     report_list.append("Avvikets beskrivende tekst:")
+    #     report_list.append(test_dev.description)
+    #     #print("")
+    #     report_list.append("Alle regelhenvisninger:")
+    #     report_list.append(test_dev.regulations)
+    #     #print("----")
 
    
-    for test_imp in report.improvement_list:
-        report_list.append("Tittel på forbedringspunkt:")
-        report_list.append(test_imp.title)
-    #     print("")
-        report_list.append("Avvikets beskrivende tekst:")
-        report_list.append(test_imp.description)
-    #     print("")
-        report_list.append("Alle regelhenvisninger:")
-        report_list.append(test_imp.regulations)
-    #     print("----")
-    import pandas as pd
-    df =  pd.DataFrame(report_list)
-    df = df.to_json()
-    
-    return df #returns the df as a json
+    # for test_imp in report.improvement_list:
+    #     report_list.append("Tittel på forbedringspunkt:")
+    #     report_list.append(test_imp.title)
+    # #     print("")
+    #     report_list.append("Avvikets beskrivende tekst:")
+    #     report_list.append(test_imp.description)
+    # #     print("")
+    #     report_list.append("Alle regelhenvisninger:")
+    #     report_list.append(test_imp.regulations)
+    # #     print("----")
+
+    # transforming to pandas dataframe to then it to convert json 
+    # import pandas as pd
+    # df =  pd.DataFrame(report_list)
+    # df = df.to_json()
+   
+ 
+    url = json.dumps(report.url)
+    activity_number = json.dumps(report.activity_number)
+    title = json.dumps(report.title)
+
+   
+    return {
+        "url": url, 
+        "activity_number" :activity_number,
+        "title" : title,
+    } #returns the df as a json
 
