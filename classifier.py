@@ -423,7 +423,11 @@ def main():
     #pages = pages.find_url_to_all_reportpages()
 
     test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
-    url = test_url
+    #url_to_report = test_url
+
+    #url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/" +  url_to_report
+    #print("The url is:" + url)
+
     url_soup = make_soup(test_url)
 
     pdf_link = find_pdf_url_on_webpage(url_soup)
@@ -471,35 +475,35 @@ def main():
     # report_list.append(report.installation_name)
     # report_list.append(report.installation_type)
    
-    # for test_dev in report.deviation_list:
-    #     report_list.append("Tittel på avvik:")
-    #     report_list.append(test_dev.title)
-    #     #print("")
-    #     report_list.append("Avvikets beskrivende tekst:")
-    #     report_list.append(test_dev.description)
-    #     #print("")
-    #     report_list.append("Alle regelhenvisninger:")
-    #     report_list.append(test_dev.regulations)
-    #     #print("----")
+    for test_dev in report.deviation_list:
+        report_list.append("Tittel på avvik:")
+        report_list.append(test_dev.title)
+        print("")
+        report_list.append("Avvikets beskrivende tekst:")
+        report_list.append(test_dev.description)
+        print("")
+        report_list.append("Alle regelhenvisninger:")
+        report_list.append(test_dev.regulations)
+        print("----")
 
    
-    # for test_imp in report.improvement_list:
-    #     report_list.append("Tittel på forbedringspunkt:")
-    #     report_list.append(test_imp.title)
-    # #     print("")
-    #     report_list.append("Avvikets beskrivende tekst:")
-    #     report_list.append(test_imp.description)
-    # #     print("")
-    #     report_list.append("Alle regelhenvisninger:")
-    #     report_list.append(test_imp.regulations)
-    # #     print("----")
+    for test_imp in report.improvement_list:
+        report_list.append("Tittel på forbedringspunkt:")
+        report_list.append(test_imp.title)
+        print("")
+        report_list.append("Avvikets beskrivende tekst:")
+        report_list.append(test_imp.description)
+        print("")
+        report_list.append("Alle regelhenvisninger:")
+        report_list.append(test_imp.regulations)
+        print("----")
 
     # transforming to pandas dataframe to then it to convert json 
     # import pandas as pd
     # df =  pd.DataFrame(report_list)
     # df = df.to_json()
    
- 
+    #Report stuff
     url = json.dumps(report.url)
     activity_number = json.dumps(report.activity_number)
     title = json.dumps(report.title)
@@ -508,14 +512,25 @@ def main():
     participants_in_revision = json.dumps(report.participants_in_revision)
     installation_name = json.dumps(report.installation_name)
     installation_type = json.dumps(report.installation_type)
+
+    #Avvik-stuff
+    title_on_deviation = json.dumps(test_dev.title)
+    description = json.dumps(test_dev.description)
+
+    #Improvement-stuff
+    
     return {
-        "url": url, 
-        "activity_number" :activity_number,
+        "url" : url, 
+        "activity_number" : activity_number,
         "title" : title,
         "date" : date,
         "taskleader" : taskleader,
         "participants_in_revision" : participants_in_revision,
         "installation_name" : installation_name,
-        "installation_type" : installation_type
+        "installation_type" : installation_type,
+
+        "title_of_deviation" : title_on_deviation,
+        "description_of_deviation" : description
+        
     } #returns the results as a json
 

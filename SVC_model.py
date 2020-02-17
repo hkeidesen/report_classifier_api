@@ -16,6 +16,8 @@ from sklearn.metrics import precision_recall_fscore_support
 from sklearn.model_selection import cross_val_score
 
 from sklearn.svm import LinearSVC
+from setup import config
+
 #from sklearn.svm import SVC
 #from sklearn.naive_bayes import ComplementNB
 #from sklearn.linear_model import LogisticRegression
@@ -23,8 +25,12 @@ from sklearn.svm import LinearSVC
 
 #from sklearn.model_selection import GridSearchCV
 
-loc = (r'C:\Users\HANNORU\Downloads\Tilsynsdatabase.xlsx')
+# Access key to data container:
+# https://ne1dnvglpstgcus0032ypop9.blob.core.windows.net/tilsynsdatabaseea805581-661f-47a4-9526-31cf9c22d5ce?sv=2018-03-28&sr=c&sig=R1PUNotr51ee%2BVwq21zBQP69SXRJ7dsAQciYEUSLbO8%3D&st=2020-01-27T14%3A31%3A52Z&se=2020-07-25T15%3A30%3A29Z&sp=rwdl
 
+#currently just running it locally. Need to figure out how to access the container from the web
+#loc = (r'C:\Users\HANNORU\Downloads\Tilsynsdatabase.xlsx')
+loc = (r'C:\Users\HANNORU\Downloads\Merget med linker_v18.xlsx')
 """
 What is below here is really all you need to train a model for categorization. You could either save the model as a pickle,
 then bring it up in the other script when predicting new category, or the whole model could be trained in the overall script file.
@@ -98,7 +104,10 @@ def clean_text(text):
     return text
 
 ## Split into train and test set, Regelhenvisning included
-X_train, X_test, y_train, y_test = train_test_split(df2['Combo'], df2['Kategori'], test_size = 0.2, random_state = 42)
+X_train, X_test, y_train, y_test = train_test_split(df2['Combo'], 
+                                                    df2['Kategori'],
+                                                    test_size = 0.2,
+                                                    random_state = 42)
 
 #TFIDF_vectorizer_with_ngram = TfidfVectorizer(preprocessor=clean_text, analyzer = 'char_wb', stop_words = stopwordSet, ngram_range=(1, 3))
 TFIDF_vectorizer_with_ngram = TfidfVectorizer(preprocessor=clean_text, analyzer = 'char_wb', stop_words = stopwordSet, ngram_range=(4, 4))
@@ -110,6 +119,15 @@ model = LinearSVC()
 model.fit(X_train_TFIDF_ngram, y_train)
 y_pred = model.predict(X_test_TFIDF_ngram)
 
+
+###Saving the trained model to pickle, so that it is possible to utilize the resutlts elsewere
+
+import pickle
+filename = "model.pickle"
+trained_model = pickle.dumps(model)
+pickle.loads(trained_model)
+pickle.dump(model, open("prediction.pickle", 'wb'))
+
 acc = accuracy_score(y_test, y_pred)
 
 print("Accuracy on classification, with ngram: {:.2f}".format(acc))
@@ -117,9 +135,12 @@ print("Accuracy on classification, with ngram: {:.2f}".format(acc))
 from sklearn.metrics import precision_recall_fscore_support
 precision_recall_fscore_support(y_test, y_pred, average='weighted')
 
+
 conf_mat = confusion_matrix(y_test, y_pred)
 fig, ax = plt.subplots(figsize=(9,7))
 sns.heatmap(conf_mat, annot=True, fmt='d', xticklabels=np.unique(df['Kategori']), yticklabels=np.unique(df['Kategori']))
 plt.ylabel('Truth')
 plt.xlabel('Predicted')
-plt.show()
+
+#plt.show()
+
