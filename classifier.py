@@ -402,7 +402,7 @@ def find_relevant_info_on_web(webpage_as_soup, report):
 
 
 
-def main():
+def main(report_url):
     print("Running main()")    
     ## INSERT HERE:Function() for going through 'https://www.ptil.no/tilsyn/tilsynsrapporter//GetData?pageindex=0&pagesize=10000'
     ## -webpage, and making a list of all the urls for new reports that are not in the excel database yet
@@ -422,13 +422,13 @@ def main():
     # find_url_to_all_reportpages()
     #pages = pages.find_url_to_all_reportpages()
 
-    test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
+    #test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
     #url_to_report = test_url
 
-    #url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/" +  url_to_report
-    #print("The url is:" + url)
+    url = "https://www.ptil.no/tilsyn/tilsynsrapporter/" +  report_url
+    #print("The url is: " + url)
 
-    url_soup = make_soup(test_url)
+    url_soup = make_soup(url)
 
     pdf_link = find_pdf_url_on_webpage(url_soup)
     pdf_link = "https://www.ptil.no/" + pdf_link

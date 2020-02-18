@@ -6,10 +6,18 @@ from flask_restful import Resource, Api
 app = Flask(__name__)
 api = Api(app)
 
-class classification(Resource):
-    def get(self):
-        return classifier.main()
-api.add_resource(classification, '/classification/')
+@app.route("/health", methods=["GET"])
+def health():
+    content = ""
+    status_code = 200
+    return content, status_code
+
+@app.route("/classification", methods=["POST"])    
+def classification():
+    status_code = 200
+    report_url = "2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
+    return classifier.main(report_url), status_code
+#api.add_resource(classification, '/classification/<report_url>')
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5050)
+    app.run(debug=True, port=5000)
