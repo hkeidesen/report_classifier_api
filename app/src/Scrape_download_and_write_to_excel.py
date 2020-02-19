@@ -422,8 +422,8 @@ def main():
         ## Everything here should be in the for-loop
         
         ## At every iteration, we extract the pdf url, corresponding to the webpage url
-    test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
-    
+    #test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
+    test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/equinor-johan-sverdrup-sikkerhetssystemer-og-elektrisk-anlegg-boligplattformen/"
     url_soup = make_soup(test_url)
 
     pdf_link = find_pdf_url_on_webpage(url_soup)
