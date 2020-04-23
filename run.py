@@ -5,15 +5,15 @@ from flask_restful import Resource, Api
 import json
 from flask import jsonify
 
+import urllib.parse
+
 app = flask.Flask(__name__)
 api = Api(app)
 
+
 @app.route("/health", methods=["GET"])
 def health():
-    content = ""
-    status_code = 200
-    print("the content is: ", content)
-    return content, status_code
+    return ("200 OK")
 
 @app.route("/classification", methods=["POST"])    
 def classification():
@@ -23,7 +23,21 @@ def classification():
     #accessing the part after ?id= in the URL
     report_url = flask.request.args.get('id')
     print("The POST request is: ",flask.request.args.get('id'))
-    return jsonify(classifier.main(report_url)), status_code
+    return jsonify(classifier.main(report_url)), status_code, 
+
+
+@app.route('/testDB')
+def testdb():
+    #configure db
+    import pyodbc
+    cnxn = pyodbc.connect()
+    cursor = cnxn.cursor()
+    result = cursor.execute("SELECT TOP 0.01 percent * FROM dbo.Avvik_og_forbedringspunkt;")
+    items =[]
+    for row in result:
+        items.append({'id':row[1]})
+    import json
+    return jsonify({'items':items})
 
 
 if __name__ == '__main__':

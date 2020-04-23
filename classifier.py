@@ -20,7 +20,7 @@ from app.src.Installation_Type_Dictionary import Installations
 class Report:
     
     def __init__(self, year, date, activity_number, title, taskleader,
-                 participants_in_revision, count_participants, url, installation_name, installation_type):
+                 participants_in_revision, count_participants, url, installation_name, installation_type, myndighet):
         #self.authority = "PTIL"'
         self.year = year
         self.date = date
@@ -36,22 +36,26 @@ class Report:
         self.deviation_list = []
         self.improvement_list = []
 
+        self.myndighet = myndighet
+
 class Deviation:
 
-    def __init__(self, title, description, regulations):
+    def __init__(self, title, description, regulations, dev_cntr):
         self.finding_type = "Avvik"
         self.title = title
         self.description = description
         self.regulations = regulations
+        self.dev_cntr = dev_cntr
         #self.cathegory = cathegory
 
 class Improvementpoint:
     
-    def __init__(self, title, description, regulations):
+    def __init__(self, title, description, regulations, imp_cntr):
         self.finding_type = "Forbedringspunkt"
         self.title = title
         self.description = description
         self.regulations = regulations
+        self.imp_cntr = imp_cntr
         #self.cathegory = cathegory
     
 ## Make soup of webpage
@@ -234,6 +238,14 @@ def find_report_title(idx, report_text):
         
     return report_title
 
+#finding myndighet
+def find_myndighet(idx, report_text):
+    idx += 1
+    myndighet = ""    
+    myndighet += report_text[idx]
+  
+    return myndighet    
+
 ## Function for finding activity number
 def find_activity_number(idx, report_text):
     
@@ -302,7 +314,12 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
             intro = find_introduction(idx, report_as_a_list_of_sentences)
             installation_name, installation_type = find_installation_and_type(intro)
         
-    return participants_in_revision, taskleader, activity_number, date, title, installation_name, installation_type
+        if "Myndighet" in line:
+            myndighet = find_myndighet(idx, report_as_a_list_of_sentences)
+        else:
+            myndighet = ""
+        
+    return participants_in_revision, taskleader, activity_number, date, title, installation_name, installation_type, myndighet
 
 ## Function for finding the title of a deviation
 def find_deviation_title(deviation):
@@ -368,10 +385,15 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         dev_text = find_deviation_text(deviation)
         dev_regulations = find_deviation_regulations(deviation)
         dev_cntr += 1
-        
-        new_deviation = Deviation(dev_title, dev_text, dev_regulations)
+
+        if dev_title == "":
+            dev_cntr = 0
+
+        new_deviation = Deviation(dev_title, dev_text, dev_regulations, dev_cntr)
         
         report.deviation_list.append(new_deviation)
+        
+        #report.deviation_list.append(dev_cntr)
     
     #print("Number of deviations found: ", dev_cntr)
     
@@ -384,7 +406,7 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         imp_text = find_improvement_text(improvement)
         imp_regulations = find_improvement_regulations(improvement)
         imp_cntr += 1
-        new_improvement = Improvementpoint(imp_title, imp_text, imp_regulations)
+        new_improvement = Improvementpoint(imp_title, imp_text, imp_regulations, imp_cntr)
         #print("Improvement point title:")
         #print(new_improvement.title)
         #print("")
@@ -396,8 +418,9 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         #print("----")
     
         report.improvement_list.append(new_improvement)
-    
-    #print("Number of improvement points found: ", imp_cntr)
+        
+        #print("Number of improvement points found: ", imp_cntr)
+    return
     #print("")
 
 
@@ -425,13 +448,15 @@ def main(report_url):
     #test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
     #url_to_report = test_url
 
-    url = "https://www.ptil.no/tilsyn/tilsynsrapporter/" +  report_url
-    #print("The url is: " + url)
+    url = "https://www.ptil.no/tilsyn/tilsynsrapporter/" +  report_url # THIS URL ONLY WORKS ONE SOME REPORTS!!!
+    
+    print("The url is: " + url)
 
     url_soup = make_soup(url)
 
     pdf_link = find_pdf_url_on_webpage(url_soup)
     pdf_link = "https://www.ptil.no/" + pdf_link
+    
     #print(pdf_link)
 
         ## Get pdf as txt
@@ -441,21 +466,21 @@ def main(report_url):
     pdf_as_list_of_words = pdfText.split("\n")
     
         ## Looping through report and searching for keywords (returned as string)
-    participants_in_revision, taskleader, activity_number, report_date, report_title, installation_name, installation_type = find_relevant_info_in_pdf(pdf_as_list_of_words)
+    participants_in_revision, taskleader, activity_number, report_date, report_title, installation_name, installation_type, myndighet = find_relevant_info_in_pdf(pdf_as_list_of_words)
+    
     
         ## Make a report object
     report = Report(report_date.strip(' ')[-4:], report_date, activity_number, report_title, taskleader,
                    participants_in_revision, participants_in_revision.count(",") + participants_in_revision.count(" og ") + 1,
-                   pdf_link, installation_name, installation_type)
+                   pdf_link, installation_name, installation_type, myndighet)
     
         ## Find deviations and improvement points, make objects then add them to the report
-    find_relevant_info_on_web(url_soup, report)
-    
+    find_relevant_info_on_web(url_soup, report)   
         ## INSERT HERE: Probably a function that takes in all the deviations, improvement points, as well as a ML model of
         ## choice, then predicts the cathegories. Maybe require human assistance if classification % is less than a threshold
         
         ## Append new finding to list
-    #report_list.append(report)
+    #   report_list.append(report)
 
   
     #print("Successfully written database")
@@ -476,6 +501,8 @@ def main(report_url):
     # report_list.append(report.installation_type)
    
     for test_dev in report.deviation_list:
+        report_list.append("Totalt antall avvik:")
+        report_list.append(test_dev.dev_cntr)
         report_list.append("Tittel på avvik:")
         report_list.append(test_dev.title)
         print("")
@@ -485,9 +512,10 @@ def main(report_url):
         report_list.append("Alle regelhenvisninger:")
         report_list.append(test_dev.regulations)
         print("----")
-
    
     for test_imp in report.improvement_list:
+        report_list.append("Antall forbedringspunkter:")
+        report_list.append(test_imp.imp_cntr)
         report_list.append("Tittel på forbedringspunkt:")
         report_list.append(test_imp.title)
         print("")
@@ -497,6 +525,7 @@ def main(report_url):
         report_list.append("Alle regelhenvisninger:")
         report_list.append(test_imp.regulations)
         print("----")
+        
 
     # transforming to pandas dataframe to then it to convert json 
     # import pandas as pd
@@ -513,12 +542,50 @@ def main(report_url):
     installation_name = json.dumps(report.installation_name)
     installation_type = json.dumps(report.installation_type)
 
-    #Avvik-stuff
-    title_on_deviation = json.dumps(test_dev.title)
-    description = json.dumps(test_dev.description)
+    myndighet = json.dumps(report.myndighet)
 
-    #Improvement-stuff
+    #Avvik-stuff'
+    print(report_list)
+    print("Debug: find deviation count: " + str(report_list[1]))
+    if report_list[1] == "0":
+        title_on_deviation = json.dumps("Ingen avvik funnet")
+        description = json.dumps("Ingen avvik funnet")
+        number_of_deviations = json.dumps("0")
+    else:
+        title_on_deviation = json.dumps(test_dev.title)
+        description = json.dumps(test_dev.description)
+        number_of_deviations = json.dumps(test_dev.dev_cntr)
     
+    #Improvement-stuff
+    total_number_of_improvements = json.dumps(test_imp.imp_cntr)
+
+    #Regulations
+    regulations = json.dumps(test_imp.regulations)
+
+    #CATEGORY PREDICTION
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
+    import csv
+    import pandas as pd
+  
+    #Trained 23.04.2020
+    X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
+    y_train = pd.Series(pd.read_pickle("y_train.pkl")) #y_train fora "category"
+    
+    count_vect = CountVectorizer()
+    X_train_counts = count_vect.fit_transform(X_train)    
+    tfidf_transformer = TfidfTransformer()  
+    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    clf = MultinomialNB().fit(X_train_tfidf, y_train)
+    clf = MultinomialNB().fit(X_train_tfidf, y_train)
+    category_pred_input = description #test_dev.description 
+
+    category = clf.predict(count_vect.transform([category_pred_input])) # prediction
+    category = category.tolist() #to list before to json
+    category = ' '.join(category).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
+    category = json.dumps(category) #to json
+
     return {
         "url" : url, 
         "activity_number" : activity_number,
@@ -528,9 +595,15 @@ def main(report_url):
         "participants_in_revision" : participants_in_revision,
         "installation_name" : installation_name,
         "installation_type" : installation_type,
-
+        "number_of_improvements": total_number_of_improvements,
         "title_of_deviation" : title_on_deviation,
-        "description_of_deviation" : description
-        
-    } #returns the results as a json
+        "description_of_deviation" : description,
+        "number_of_deviations" : number_of_deviations,
+        "Myndighet" : myndighet,
+        "Category" : category,
+
+        "Regelhenvisning" : regulations
+                
+    } 
+    
 
