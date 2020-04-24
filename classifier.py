@@ -235,7 +235,7 @@ def find_report_title(idx, report_text):
         report_title = ""
         report_title += report_text[idx]
         idx += 1
-        
+    print("The report title is: " + report_title)
     return report_title
 
 #finding myndighet
@@ -309,7 +309,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
             
         if "Rapporttittel" in line:
             title = find_report_title(idx, report_as_a_list_of_sentences)
-        
+                    
         if bool(re.compile('1\s+').match(line)):
             intro = find_introduction(idx, report_as_a_list_of_sentences)
             installation_name, installation_type = find_installation_and_type(intro)
@@ -319,9 +319,16 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         else:
             myndighet = ""
         
+        import csv
+        with open("report_as_sentence.csv", 'w', newline='', encoding='utf-8') as csvfile:
+            csv_writer = csv.writer(csvfile, delimiter=',',
+                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            csv_writer.writerow(report_as_a_list_of_sentences)
+
+
     return participants_in_revision, taskleader, activity_number, date, title, installation_name, installation_type, myndighet
 
-## Function for finding the title of a deviation
+## Function for finding the title of a deviation, "avvik"
 def find_deviation_title(deviation):
     
     dev_title = deviation.h3.get_text()
@@ -346,7 +353,7 @@ def find_deviation_regulations(deviation):
         
     return dev_regulation_list
 
-## Function for finding the title of an improvement point
+## Function for finding the title of an improvement point, "forbedringspunkt"
 def find_improvement_title(improvement):
     
     imp_title = improvement.h3.get_text()
@@ -388,6 +395,8 @@ def find_relevant_info_on_web(webpage_as_soup, report):
 
         if dev_title == "":
             dev_cntr = 0
+            return dev_cntr
+            break
 
         new_deviation = Deviation(dev_title, dev_text, dev_regulations, dev_cntr)
         
@@ -457,7 +466,7 @@ def main(report_url):
     pdf_link = find_pdf_url_on_webpage(url_soup)
     pdf_link = "https://www.ptil.no/" + pdf_link
     
-    #print(pdf_link)
+    print(pdf_link)
 
         ## Get pdf as txt
     pdfText = convert_pdf_to_txt(pdf_link)
@@ -501,30 +510,43 @@ def main(report_url):
     # report_list.append(report.installation_type)
    
     for test_dev in report.deviation_list:
-        report_list.append("Totalt antall avvik:")
-        report_list.append(test_dev.dev_cntr)
-        report_list.append("Tittel på avvik:")
-        report_list.append(test_dev.title)
-        print("")
-        report_list.append("Avvikets beskrivende tekst:")
-        report_list.append(test_dev.description)
-        print("")
-        report_list.append("Alle regelhenvisninger:")
-        report_list.append(test_dev.regulations)
-        print("----")
+        # if report.deviation_list[1] == 0:
+        #     report_list.append("Totalt antall avvik:")
+        #     report_list.append("0")
+        #     #report_list.append(test_dev.title)
+        #     report_list.append("Ingen avvik funnet")
+        #     print("")
+        #     report_list.append("Avvikets beskrivende tekst:")
+        #     #report_list.append(test_dev.description)
+        #     print("")
+        #     report_list.append("Alle regelhenvisninger:")
+        #     #report_list.append(test_dev.regulations)
+        #     print("----")
+        # else:
+            report_list.append("Totalt antall avvik:")
+            report_list.append(test_dev.dev_cntr)
+            report_list.append("Tittel på avvik:")
+            report_list.append(test_dev.title)
+            #print("")
+            report_list.append("Avvikets beskrivende tekst:")
+            report_list.append(test_dev.description)
+            #print("")
+            report_list.append("Alle regelhenvisninger:")
+            report_list.append(test_dev.regulations)
+            #print("----")
    
     for test_imp in report.improvement_list:
         report_list.append("Antall forbedringspunkter:")
         report_list.append(test_imp.imp_cntr)
         report_list.append("Tittel på forbedringspunkt:")
         report_list.append(test_imp.title)
-        print("")
+        #print("")
         report_list.append("Avvikets beskrivende tekst:")
         report_list.append(test_imp.description)
-        print("")
+        #print("")
         report_list.append("Alle regelhenvisninger:")
         report_list.append(test_imp.regulations)
-        print("----")
+        #print("----")
         
 
     # transforming to pandas dataframe to then it to convert json 
@@ -545,28 +567,37 @@ def main(report_url):
     myndighet = json.dumps(report.myndighet)
 
     #Avvik-stuff'
-    print(report_list)
-    print("Debug: find deviation count: " + str(report_list[1]))
-    if report_list[1] == "0":
+    if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
         title_on_deviation = json.dumps("Ingen avvik funnet")
-        description = json.dumps("Ingen avvik funnet")
+        dev_description = json.dumps("Ingen avvik funnet")
         number_of_deviations = json.dumps("0")
+        dev_regulations = json.dumps("N/A")
     else:
         title_on_deviation = json.dumps(test_dev.title)
-        description = json.dumps(test_dev.description)
+        dev_description = json.dumps(test_dev.description)
         number_of_deviations = json.dumps(test_dev.dev_cntr)
+        dev_regulations = json.dumps(test_dev.regulations)
     
     #Improvement-stuff
-    total_number_of_improvements = json.dumps(test_imp.imp_cntr)
+    if not report.improvement_list: #if improvement list is empty, the below will be executed
+        tilte_on_improvement = json.dumps("Ingen forbedringspunkter funnet")
+        imp_description = json.dumps("Ingen forbedringspunkt funnet")
+        total_number_of_improvements = json.dumps("0")
+        imp_regulations = json.dumps("N/A")
+    else:
+        total_number_of_improvements = json.dumps(test_imp.imp_cntr)
+        title_on_improvement = json.dumps(test_imp.title)
+        imp_description = json.dumps(test_imp.description)
+        imp_regulations = json.dumps(test_imp.regulations)
 
     #Regulations
-    regulations = json.dumps(test_imp.regulations)
+    
 
     #CATEGORY PREDICTION
     from sklearn.naive_bayes import MultinomialNB
     from sklearn.feature_extraction.text import CountVectorizer
     from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
-    import csv
+    # import csv
     import pandas as pd
   
     #Trained 23.04.2020
@@ -579,31 +610,56 @@ def main(report_url):
     X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
     clf = MultinomialNB().fit(X_train_tfidf, y_train)
     clf = MultinomialNB().fit(X_train_tfidf, y_train)
-    category_pred_input = description #test_dev.description 
+    dev_category_pred_input = dev_description #test_dev.description
+    imp_category_pred_input =  imp_description
 
-    category = clf.predict(count_vect.transform([category_pred_input])) # prediction
-    category = category.tolist() #to list before to json
-    category = ' '.join(category).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
-    category = json.dumps(category) #to json
+    #deviation category classification
+    if not report.deviation_list: #Bypasses the classification if there are no deviations to classify       
+        category_deviation = json.dumps("N/A")
+    else:     
+        category_deviation = clf.predict(count_vect.transform([dev_category_pred_input])) # prediction
+        category_deviation = category_deviation.tolist() #to list before to json
+        category_deviation = ' '.join(category_deviation).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
+        category_deviation = json.dumps(category_deviation) #to json
+
+    #improvement category classiification
+    if not report.improvement_list:
+        category_improvement = "N/A"
+    else:
+        category_improvement = clf.predict(count_vect.transform([imp_category_pred_input])) # prediction
+        category_improvement = category_improvement.tolist() #to list before to json
+        category_improvement = ' '.join(category_improvement).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
+        category_improvement = json.dumps(category_improvement) #to json
 
     return {
-        "url" : url, 
-        "activity_number" : activity_number,
-        "title" : title,
-        "date" : date,
-        "taskleader" : taskleader,
-        "participants_in_revision" : participants_in_revision,
-        "installation_name" : installation_name,
-        "installation_type" : installation_type,
-        "number_of_improvements": total_number_of_improvements,
-        "title_of_deviation" : title_on_deviation,
-        "description_of_deviation" : description,
-        "number_of_deviations" : number_of_deviations,
-        "Myndighet" : myndighet,
-        "Category" : category,
-
-        "Regelhenvisning" : regulations
-                
+        "generic_report_content"
+        :[{
+            "url" : url, 
+            "activity_number" : activity_number,
+            "title" : title,
+            "date" : date,
+            "taskleader" : taskleader,
+            "participants_in_revision" : participants_in_revision,
+            "installation_name" : installation_name,
+            "installation_type" : installation_type,
+            "Myndighet" : myndighet,
+        }],
+        "improvement_points":
+        [{            
+            "number_of_improvements": total_number_of_improvements,
+            "title_in_improvements": title_on_improvement,
+            "description_of_deviation" : imp_description,
+            "category_improvement" : category_improvement,
+            "imp_regelhenvisning" : imp_regulations,
+        }],
+        "deviation_points":
+        [{    
+            "title_of_deviation" : title_on_deviation,
+            "number_of_deviations" : number_of_deviations,
+            "description_of_deviation" : dev_description,
+            "Category_deviation" : category_deviation,
+            "dev_regelhenvisning":dev_regulations,            
+        }]                    
     } 
     
 

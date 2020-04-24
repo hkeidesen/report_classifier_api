@@ -23,6 +23,7 @@ def classification():
     #accessing the part after ?id= in the URL
     report_url = flask.request.args.get('id')
     print("The POST request is: ",flask.request.args.get('id'))
+
     return jsonify(classifier.main(report_url)), status_code, 
 
 
@@ -30,7 +31,8 @@ def classification():
 def testdb():
     #configure db
     import pyodbc
-    cnxn = pyodbc.connect()
+    from params import conn_string
+    cnxn = pyodbc.connect(conn_string)
     cursor = cnxn.cursor()
     result = cursor.execute("SELECT TOP 0.01 percent * FROM dbo.Avvik_og_forbedringspunkt;")
     items =[]
