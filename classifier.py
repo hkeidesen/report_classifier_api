@@ -309,7 +309,11 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
             
         if "Rapporttittel" in line:
             title = find_report_title(idx, report_as_a_list_of_sentences)
-                    
+            if title[0].isupper():
+                break
+            else:
+                print("The title has been cut off.")
+
         if bool(re.compile('1\s+').match(line)):
             intro = find_introduction(idx, report_as_a_list_of_sentences)
             installation_name, installation_type = find_installation_and_type(intro)
@@ -321,8 +325,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         
         import csv
         with open("report_as_sentence.csv", 'w', newline='', encoding='utf-8') as csvfile:
-            csv_writer = csv.writer(csvfile, delimiter=',',
-                                    quotechar='|', quoting=csv.QUOTE_MINIMAL)
+            csv_writer = csv.writer(csvfile)
             csv_writer.writerow(report_as_a_list_of_sentences)
 
 
@@ -539,11 +542,11 @@ def main(report_url):
         report_list.append("Antall forbedringspunkter:")
         report_list.append(test_imp.imp_cntr)
         report_list.append("Tittel på forbedringspunkt:")
-        report_list.append(test_imp.title)
-        #print("")
+        report_list.append(test_imp.title)      
         report_list.append("Avvikets beskrivende tekst:")
         report_list.append(test_imp.description)
-        #print("")
+        print("")
+        print(report_list)
         report_list.append("Alle regelhenvisninger:")
         report_list.append(test_imp.regulations)
         #print("----")
@@ -648,7 +651,7 @@ def main(report_url):
         [{            
             "number_of_improvements": total_number_of_improvements,
             "title_in_improvements": title_on_improvement,
-            "description_of_deviation" : imp_description,
+            "description_of_improvement" : imp_description,
             "category_improvement" : category_improvement,
             "imp_regelhenvisning" : imp_regulations,
         }],
