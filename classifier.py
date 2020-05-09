@@ -460,8 +460,13 @@ def main(report_url):
     #test_url = "https://www.ptil.no/tilsyn/tilsynsrapporter/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/"
     #url_to_report = test_url
 
-    url = "https://www.ptil.no/tilsyn/tilsynsrapporter/" +  report_url # THIS URL ONLY WORKS ONE SOME REPORTS!!!
-    
+
+    """
+    There has been some kind of restructuring in PTILs website, and the corrent URL reading code
+    does not work correctly. This needs to be fixed ASAP!
+    ######url = "https://www.ptil.no/tilsyn/tilsynsrapporter/" +  report_url # THIS URL ONLY WORKS ONE SOME REPORTS!!!
+    """
+    url = report_url
     print("The url is: " + url)
 
     url_soup = make_soup(url)
@@ -469,7 +474,7 @@ def main(report_url):
     pdf_link = find_pdf_url_on_webpage(url_soup)
     pdf_link = "https://www.ptil.no/" + pdf_link
     
-    print(pdf_link)
+    print("The report that is being processed now can be found at:", pdf_link)
 
         ## Get pdf as txt
     pdfText = convert_pdf_to_txt(pdf_link)

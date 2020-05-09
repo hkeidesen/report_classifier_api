@@ -40,6 +40,9 @@ def testdb():
         items.append({'id':row[1]})
     import json
     return jsonify({'items':items})
+@app.route('/test', methods=["POST"])
+def test():
+    return jsonify(classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/repsol-yme-verifikasjon-av-rorledningssystemer-og-havbunnsanlegg/'))
 
 
 if __name__ == '__main__':
