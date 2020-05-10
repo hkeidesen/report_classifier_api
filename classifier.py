@@ -203,6 +203,7 @@ def convert_pdf_to_txt(pdf_url):
     device.close()
     retstr.close()
     
+    #print(pdf_as_text)
     return pdf_as_text
 
 ## Function for finding participants in revision team
@@ -214,7 +215,7 @@ def find_participants_in_revision(idx, report_text):
         participants_in_revision = ""
         participants_in_revision += report_text[idx]
         idx += 1
-        
+    #print("The parcticipants were: ", participants_in_revision)
     return participants_in_revision
 
 ## Function for finding task leader
@@ -287,17 +288,18 @@ def find_installation_and_type(report_intro):
             installation_name = key
             
             found = True
-            break
-        
+            break        
+    print("installation_name: ", installation_name, "installation_type: ",installation_type)
     return installation_name, installation_type 
 
 ## Function for looping through pdf and searching for keywords
 def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
-    
     for idx, line in enumerate(report_as_a_list_of_sentences):
+        #print(idx, line)
         if ("Deltakere i revisjonslaget" in line) or ("Deltakarar i revisjonslaget" in line):
             participants_in_revision = find_participants_in_revision(idx, report_as_a_list_of_sentences)
-            
+            print("trying to find the participants in the team.")
+
         if ("Oppgaveleder" in line) or ("Oppgåveleiar" in line):
             taskleader = find_taskleader(idx, report_as_a_list_of_sentences)
             
@@ -310,7 +312,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         if "Rapporttittel" in line:
             title = find_report_title(idx, report_as_a_list_of_sentences)
             if title[0].isupper():
-                break
+                continue
             else:
                 print("The title has been cut off.")
 
@@ -399,7 +401,7 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         if dev_title == "":
             dev_cntr = 0
             return dev_cntr
-            break
+            
 
         new_deviation = Deviation(dev_title, dev_text, dev_regulations, dev_cntr)
         
@@ -569,8 +571,12 @@ def main(report_url):
     date = json.dumps(report.date)
     taskleader = json.dumps(report.taskleader)
     participants_in_revision = json.dumps(report.participants_in_revision)
-    installation_name = json.dumps(report.installation_name)
-    installation_type = json.dumps(report.installation_type)
+    if not report.installation_name:
+        installation_name = json.dumps("Navn på installasjon ikke funnet.")
+        installation_type = json.dumps(report.installation_type)
+    else:
+        installation_name = json.dumps(report.installation_name)
+        installation_type = json.dumps(report.installation_type)
 
     myndighet = json.dumps(report.myndighet)
 
@@ -587,8 +593,9 @@ def main(report_url):
         dev_regulations = json.dumps(test_dev.regulations)
     
     #Improvement-stuff
+    print("the title of dev is: ", title_on_deviation)
     if not report.improvement_list: #if improvement list is empty, the below will be executed
-        tilte_on_improvement = json.dumps("Ingen forbedringspunkter funnet")
+        title_on_improvement = json.dumps("Ingen forbedringspunkter funnet")
         imp_description = json.dumps("Ingen forbedringspunkt funnet")
         total_number_of_improvements = json.dumps("0")
         imp_regulations = json.dumps("N/A")
@@ -597,6 +604,7 @@ def main(report_url):
         title_on_improvement = json.dumps(test_imp.title)
         imp_description = json.dumps(test_imp.description)
         imp_regulations = json.dumps(test_imp.regulations)
+    print("the title of imp is: ",title_on_improvement)
 
     #Regulations
     

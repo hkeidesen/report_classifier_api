@@ -198,7 +198,8 @@ Installations = {
     'West Linus' : 'Rigg',
     'West Phoenix' : 'Rigg',
     'West Venture' : 'Rigg',
-    #'Yme' : 
+    'West Bollsta' : 'Rigg',
+    'Yme' :"Installasjon", 
     'Åsgard' : 'Installasjon',
     'Åsgard A' : 'Installasjon',
     'Åsgard B' : 'Installasjon',

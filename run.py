@@ -42,7 +42,8 @@ def testdb():
     return jsonify({'items':items})
 @app.route('/test', methods=["POST"])
 def test():
-    return jsonify(classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/repsol-yme-verifikasjon-av-rorledningssystemer-og-havbunnsanlegg/'))
+    # working URL
+    return jsonify(classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/'))
 
 
 if __name__ == '__main__':
