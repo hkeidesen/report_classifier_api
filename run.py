@@ -30,7 +30,21 @@ def classification():
 @app.route('/testDB', methods=["POST"])
 def testdb():
     #configure db
-    return jsonify(classifier.main("/2019/conocophillips-ekofisk-stimuleringsoperasjon-fra-fartoy/")) 
+    import pyodbc
+    from params import conn_string
+    cnxn = pyodbc.connect(conn_string)
+    cursor = cnxn.cursor()
+    result = cursor.execute("SELECT TOP 0.01 percent * FROM dbo.Avvik_og_forbedringspunkt;")
+    items =[]
+    for row in result:
+        items.append({'id':row[1]})
+    import json
+    return jsonify({'items':items})
+    
+@app.route('/test', methods=["POST"])
+def test():
+    # working URL
+    return jsonify(classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/'))
 
 
 if __name__ == '__main__':
