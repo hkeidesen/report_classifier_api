@@ -1,0 +1,15 @@
+# This file may be used to create an environment using:
+# $ conda create --name <env> --file <this file>
+# platform: win-64
+@EXPLICIT
+https://repo.anaconda.com/pkgs/main/win-64/ca-certificates-2020.1.1-0.conda
+https://repo.anaconda.com/pkgs/main/win-64/vs2015_runtime-14.16.27012-hf0eaf9b_1.conda
+https://repo.anaconda.com/pkgs/main/win-64/vc-14.1-h0510ff6_4.conda
+https://repo.anaconda.com/pkgs/main/win-64/openssl-1.1.1d-he774522_4.conda
+https://repo.anaconda.com/pkgs/main/win-64/sqlite-3.31.1-he774522_0.conda
+https://repo.anaconda.com/pkgs/main/win-64/python-3.7.6-h60c2a47_2.conda
+https://repo.anaconda.com/pkgs/main/win-64/certifi-2019.11.28-py37_0.conda
+https://repo.anaconda.com/pkgs/main/win-64/wincertstore-0.2-py37_0.conda
+https://repo.anaconda.com/pkgs/main/win-64/setuptools-45.2.0-py37_0.conda
+https://repo.anaconda.com/pkgs/main/win-64/wheel-0.34.2-py37_0.conda
+https://repo.anaconda.com/pkgs/main/win-64/pip-20.0.2-py37_1.conda
