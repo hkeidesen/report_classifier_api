@@ -8,7 +8,7 @@ from io import BytesIO
 
 import re
 import requests
-import json 
+import json
 import openpyxl
 from urllib.request import urlopen, Request
 from urllib.parse import urljoin
@@ -18,7 +18,7 @@ from time import sleep
 from app.src.Installation_Type_Dictionary import Installations
 
 class Report:
-    
+
     def __init__(self, year, date, activity_number, title, taskleader,
                  participants_in_revision, count_participants, url, installation_name, installation_type, myndighet):
         #self.authority = "PTIL"'
@@ -32,7 +32,7 @@ class Report:
         self.url = url
         self.installation_name = installation_name
         self.installation_type = installation_type
-        
+
         self.deviation_list = []
         self.improvement_list = []
 
@@ -49,7 +49,7 @@ class Deviation:
         #self.cathegory = cathegory
 
 class Improvementpoint:
-    
+
     def __init__(self, title, description, regulations, imp_cntr):
         self.finding_type = "Forbedringspunkt"
         self.title = title
@@ -57,10 +57,10 @@ class Improvementpoint:
         self.regulations = regulations
         self.imp_cntr = imp_cntr
         #self.cathegory = cathegory
-    
+
 ## Make soup of webpage
 def make_soup(url):
-    
+
     res = requests.get(url)
     soup = BeautifulSoup(res.text,"lxml")
 
@@ -83,7 +83,7 @@ def find_pdf_url_on_webpage(soup):
         pdf_types = link.findAll('h3')
         for pdf_type in pdf_types:
             tmp = pdf_type.get_text()
-            #print(tmp, '\n')
+            print("the temp is:", tmp, '\n')
             print("Getting the report link...")
             if "Rapport" in tmp or "rapport" in tmp or "tilsynsrapport" in tmp or "Tilsynsrapport" in tmp:
                 report_link = link.get('href')
@@ -91,16 +91,16 @@ def find_pdf_url_on_webpage(soup):
             else:
                 print("There was an error getting the report link. Are you sure that the provided link contains a PDF-file?")
                 print(report_link)
-            return report_link            
+            return report_link
     return "https://www.ptil.no/" + report_link
 ## Function for opening, reading and converting a pdf url to txt format
 
 
 
 def get_all_pdf_link_on_url(pages):
-    url = "https://www.ptil.no/"    
-    url_reports_pages = "https://www.ptil.no/tilsyn/tilsynsrapporter/?p=" 
-    url_to_reports = []    
+    url = "https://www.ptil.no/"
+    url_reports_pages = "https://www.ptil.no/tilsyn/tilsynsrapporter/?p="
+    url_to_reports = []
     url = pages
     response = requests.get(url) #need headers?
     soup = BeautifulSoup(response.content, "html.parser")
@@ -109,7 +109,7 @@ def get_all_pdf_link_on_url(pages):
         for link in soup.find_all("a", {"class":"pcard"}, href=True):
             try:
                 url_to_reports.append(link['href'])
-                    
+
             except AttributeError:
                 print("An AttributeError error occured. Proceeding")
                 pass
@@ -119,8 +119,8 @@ def get_all_pdf_link_on_url(pages):
     return url_to_reports
 
 def find_url_to_all_reportpages():
-    # Needed for the header in request 
-    headers = {"User-Agent": "Mozilla/5.0"} 
+    # Needed for the header in request
+    headers = {"User-Agent": "Mozilla/5.0"}
     pages = []
     url_reports = []
 
@@ -139,15 +139,15 @@ def find_url_to_all_reportpages():
         url = url + str(i)
         #the URL from the previous step is used to .get all the content on the website
         response = requests.get(url, headers=headers)
-        #using the built-in html parser, the content from the response is translated to text?  
+        #using the built-in html parser, the content from the response is translated to text?
         soup = BeautifulSoup(response.content,"html.parser")
             #based on the webpage structure, it can be found that the currect pagination page can be found in the class "page-item active" and "li".
             #This is then transformed to .text.
 
-            # Ensuring that if the response code is 200, else it will fail 
+            # Ensuring that if the response code is 200, else it will fail
         if response.status_code == 200:
             #try: except: to catch the error that will be presenting if soup_page_number = soup.find().text fails
-            try: 
+            try:
                 soup_page_number = soup.find("li", {"class":"page-item active"}).text
 
                 #translated to integer
@@ -155,17 +155,17 @@ def find_url_to_all_reportpages():
 
                 #print("Appending the current page,", i ,", to the list \"pages\"")
                 #pages.append(soup_page_number)
-                
+
                 #increases i
                 i+=1
             #in this case, an AttributeError will be caught in soup_page_number. Most likely it is becasue there are no more pages to load.
-            # An AttributeError is risen when there are no more pages in the pagination to load   
-            except AttributeError: 
+            # An AttributeError is risen when there are no more pages in the pagination to load
+            except AttributeError:
                 print("End of page reached. Last page is", pages[-1])
                 #breaking out of the for-loop when there are no more pages to load.
                 break
         else:
-            print("An error with the URL casued the program to crash. It can either be the website or the the connection to the website. The server responded with error code", 
+            print("An error with the URL casued the program to crash. It can either be the website or the the connection to the website. The server responded with error code",
                     response.status_code)
             break
         #url_reports.append(find_pdf_url_on_webpage(url))
@@ -180,13 +180,30 @@ def find_url_to_all_reportpages():
 
 
 def convert_pdf_to_txt(pdf_url):
-    
+
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
     codec = 'utf-8'
     laparams = LAParams()
     device = TextConverter(rsrcmgr, retstr, codec=codec, laparams=laparams)
-    f = urlopen(pdf_url).read()
+
+    import urllib
+    import http
+    from datetime import datetime
+
+    try:
+        f = urlopen(pdf_url).read()
+
+    except (http.client.IncompleteRead) as e:
+        f = e.partial
+        print(datetime.now())
+        print("An error with the link has occured. Good luck.")
+
+
+
+    #f = urlopen(pdf_url).read()
+
+    # f = requestObj
     fp = BytesIO(f)
     interpreter = PDFPageInterpreter(rsrcmgr, device)
     password = ""
@@ -198,39 +215,40 @@ def convert_pdf_to_txt(pdf_url):
         interpreter.process_page(page)
 
     pdf_as_text = retstr.getvalue()
+    print(pdf_as_text)
 
     fp.close()
     device.close()
     retstr.close()
-    
+
     return pdf_as_text
 
 ## Function for finding participants in revision team
 def find_participants_in_revision(idx, report_text):
-    
+
     idx += 1
-    
+
     while report_text[idx] != " " and report_text[idx] != "":
         participants_in_revision = ""
         participants_in_revision += report_text[idx]
         idx += 1
-        
+    print("The participants are: " + participants_in_revision)
     return participants_in_revision
 
 ## Function for finding task leader
 def find_taskleader(idx, report_text):
-    
+
     task_leader = ""
     idx += 1
     task_leader += report_text[idx]
-    
+
     return task_leader
 
 ## Function for finding report title
-def find_report_title(idx, report_text): 
-    
+def find_report_title(idx, report_text):
+
     idx += 1
-    
+
     while report_text[idx] != " " and report_text[idx] != "":
         report_title = ""
         report_title += report_text[idx]
@@ -241,72 +259,72 @@ def find_report_title(idx, report_text):
 #finding myndighet
 def find_myndighet(idx, report_text):
     idx += 1
-    myndighet = ""    
+    myndighet = ""
     myndighet += report_text[idx]
-  
-    return myndighet    
+
+    return myndighet
 
 ## Function for finding activity number
 def find_activity_number(idx, report_text):
-    
+
     idx += 1
     activity_number = ""
     activity_number += report_text[idx]
-    
+
     return activity_number
 
 ## Function for finding date of the report
 def find_date(idx, report_text):
-    
+
     idx += 1
     report_date = ""
-   
+
     report_date += report_text[idx]
-   
+
     return report_date
 
-## Function for finding the introduction text 
+## Function for finding the introduction text
 def find_introduction(idx, report_text):
-    
+
     idx += 1
     report_intro = ""
-    
+
     while not re.compile('2\s+').match(report_text[idx]):
-        
+
         report_intro += report_text[idx]
         idx +=1
-        
+
     return report_intro
 
 ## Function for finding installation type
 def find_installation_and_type(report_intro):
-       
+
     for key in Installations:
         if key in report_intro:
             installation_type = Installations.get(key)
             installation_name = key
-            
+
             found = True
             break
-        
-    return installation_name, installation_type 
+
+    return installation_name, installation_type
 
 ## Function for looping through pdf and searching for keywords
 def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
-    
+
     for idx, line in enumerate(report_as_a_list_of_sentences):
         if ("Deltakere i revisjonslaget" in line) or ("Deltakarar i revisjonslaget" in line):
             participants_in_revision = find_participants_in_revision(idx, report_as_a_list_of_sentences)
-            
+
         if ("Oppgaveleder" in line) or ("Oppgåveleiar" in line):
             taskleader = find_taskleader(idx, report_as_a_list_of_sentences)
-            
+
         if "Aktivitetsnummer" in line:
             activity_number = find_activity_number(idx, report_as_a_list_of_sentences)
-            
+
         if "Dato" in line:
             date = find_date(idx, report_as_a_list_of_sentences)
-            
+
         if "Rapporttittel" in line:
             title = find_report_title(idx, report_as_a_list_of_sentences)
             if title[0].isupper():
@@ -317,12 +335,12 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         if bool(re.compile('1\s+').match(line)):
             intro = find_introduction(idx, report_as_a_list_of_sentences)
             installation_name, installation_type = find_installation_and_type(intro)
-        
+
         if "Myndighet" in line:
             myndighet = find_myndighet(idx, report_as_a_list_of_sentences)
         else:
             myndighet = ""
-        
+
         import csv
         with open("report_as_sentence.csv", 'w', newline='', encoding='utf-8') as csvfile:
             csv_writer = csv.writer(csvfile)
@@ -333,61 +351,61 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
 
 ## Function for finding the title of a deviation, "avvik"
 def find_deviation_title(deviation):
-    
+
     dev_title = deviation.h3.get_text()
-    
+
     return dev_title
 
 def find_deviation_text(deviation):
-    
+
     dev_text = deviation.p.get_text()
-    
+
     return dev_text
 
 ## Function for finding the regulations related to a deviation
 def find_deviation_regulations(deviation):
-    
+
     dev_regulations = deviation.find_all('a')
     dev_regulation_list = ""
-    
+
     for dev_regulation in dev_regulations:
         dev_regulation_list += dev_regulation.get_text()
         dev_regulation_list += "\n"
-        
+
     return dev_regulation_list
 
 ## Function for finding the title of an improvement point, "forbedringspunkt"
 def find_improvement_title(improvement):
-    
+
     imp_title = improvement.h3.get_text()
-    
+
     return imp_title
 
 ## Function for finding the 'reason' of an improvement point
 def find_improvement_text(improvement):
-    
+
     imp_text = improvement.p.get_text()
-    
+
     return imp_text
 
 ## Function for finding the regulations related to an improvement points
 def find_improvement_regulations(improvement):
-    
+
     imp_regulations = improvement.find_all('a')
     imp_regulation_list = ""
-    
+
     for imp_regulation in imp_regulations:
         imp_regulation_list += imp_regulation.get_text()
         imp_regulation_list += "\n"
-        
+
     return imp_regulation_list
 
 ## Function for extracting all the deviations and improvement points from the webpage of a report
 def find_relevant_info_on_web(webpage_as_soup, report):
-    
+
     deviations = webpage_as_soup.find_all('div', attrs={"class":"tab-pane","id":re.compile('deviation.*')})
     dev_cntr = 0
-    
+
     #print("Here are the deviations:")
     #print("")
     for deviation in deviations:
@@ -402,13 +420,13 @@ def find_relevant_info_on_web(webpage_as_soup, report):
             break
 
         new_deviation = Deviation(dev_title, dev_text, dev_regulations, dev_cntr)
-        
+
         report.deviation_list.append(new_deviation)
-        
+
         #report.deviation_list.append(dev_cntr)
-    
+
     #print("Number of deviations found: ", dev_cntr)
-    
+
     improvements = webpage_as_soup.find_all('div', attrs={"class":"tab-pane","id":re.compile('improvementPoint.*')})
     imp_cntr = 0
     #print("Here are the improvement points:")
@@ -428,9 +446,9 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         #print("All regulations:")
         #print(new_improvement.regulations)
         #print("----")
-    
+
         report.improvement_list.append(new_improvement)
-        
+
         #print("Number of improvement points found: ", imp_cntr)
     return
     #print("")
@@ -438,18 +456,18 @@ def find_relevant_info_on_web(webpage_as_soup, report):
 
 
 def main(report_url):
-    print("Running main()")    
+    print("Running main()")
     ## INSERT HERE:Function() for going through 'https://www.ptil.no/tilsyn/tilsynsrapporter//GetData?pageindex=0&pagesize=10000'
     ## -webpage, and making a list of all the urls for new reports that are not in the excel database yet
-    
+
     ## list_of_webpage_urls_for_reports = []
-    
+
     ## Make list for all the reports
     report_list = []
-      
+
     ## for-loop through all the reports in the list
         ## Everything here should be in the for-loop
-        
+
         ## At every iteration, we extract the pdf url, corresponding to the webpage url
 
 
@@ -461,43 +479,43 @@ def main(report_url):
     #url_to_report = test_url
 
     url = "https://www.ptil.no/tilsyn/tilsynsrapporter/" +  report_url # THIS URL ONLY WORKS ONE SOME REPORTS!!!
-    
+
     print("The url is: " + url)
 
     url_soup = make_soup(url)
 
     pdf_link = find_pdf_url_on_webpage(url_soup)
     pdf_link = "https://www.ptil.no/" + pdf_link
-    
+
     print(pdf_link)
 
         ## Get pdf as txt
     pdfText = convert_pdf_to_txt(pdf_link)
 
         ## Split on "\n"
-    pdf_as_list_of_words = pdfText.split("\n")
-    
+    pdf_as_list_of_words = pdfText.split("\n")# SJEKK DENNE
+
         ## Looping through report and searching for keywords (returned as string)
     participants_in_revision, taskleader, activity_number, report_date, report_title, installation_name, installation_type, myndighet = find_relevant_info_in_pdf(pdf_as_list_of_words)
-    
-    
+
+
         ## Make a report object
     report = Report(report_date.strip(' ')[-4:], report_date, activity_number, report_title, taskleader,
                    participants_in_revision, participants_in_revision.count(",") + participants_in_revision.count(" og ") + 1,
                    pdf_link, installation_name, installation_type, myndighet)
-    
+
         ## Find deviations and improvement points, make objects then add them to the report
-    find_relevant_info_on_web(url_soup, report)   
+    find_relevant_info_on_web(url_soup, report)
         ## INSERT HERE: Probably a function that takes in all the deviations, improvement points, as well as a ML model of
         ## choice, then predicts the cathegories. Maybe require human assistance if classification % is less than a threshold
-        
+
         ## Append new finding to list
     #   report_list.append(report)
 
-  
+
     #print("Successfully written database")
-    
-   
+
+
     # ## Printing the extracted information from the report
     #print("URL for pdf:")
     #print(report.url)
@@ -511,7 +529,7 @@ def main(report_url):
     # report_list.append(report.participants_in_revision)
     # report_list.append(report.installation_name)
     # report_list.append(report.installation_type)
-   
+
     for test_dev in report.deviation_list:
         # if report.deviation_list[1] == 0:
         #     report_list.append("Totalt antall avvik:")
@@ -537,12 +555,12 @@ def main(report_url):
             report_list.append("Alle regelhenvisninger:")
             report_list.append(test_dev.regulations)
             #print("----")
-   
+
     for test_imp in report.improvement_list:
         report_list.append("Antall forbedringspunkter:")
         report_list.append(test_imp.imp_cntr)
         report_list.append("Tittel på forbedringspunkt:")
-        report_list.append(test_imp.title)      
+        report_list.append(test_imp.title)
         report_list.append("Avvikets beskrivende tekst:")
         report_list.append(test_imp.description)
         print("")
@@ -550,13 +568,13 @@ def main(report_url):
         report_list.append("Alle regelhenvisninger:")
         report_list.append(test_imp.regulations)
         #print("----")
-        
 
-    # transforming to pandas dataframe to then it to convert json 
+
+    # transforming to pandas dataframe to then it to convert json
     # import pandas as pd
     # df =  pd.DataFrame(report_list)
     # df = df.to_json()
-   
+
     #Report stuff
     url = json.dumps(report.url)
     activity_number = json.dumps(report.activity_number)
@@ -580,7 +598,7 @@ def main(report_url):
         dev_description = json.dumps(test_dev.description)
         number_of_deviations = json.dumps(test_dev.dev_cntr)
         dev_regulations = json.dumps(test_dev.regulations)
-    
+
     #Improvement-stuff
     if not report.improvement_list: #if improvement list is empty, the below will be executed
         tilte_on_improvement = json.dumps("Ingen forbedringspunkter funnet")
@@ -594,7 +612,7 @@ def main(report_url):
         imp_regulations = json.dumps(test_imp.regulations)
 
     #Regulations
-    
+
 
     #CATEGORY PREDICTION
     from sklearn.naive_bayes import MultinomialNB
@@ -602,14 +620,14 @@ def main(report_url):
     from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
     # import csv
     import pandas as pd
-  
+
     #Trained 23.04.2020
     X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
     y_train = pd.Series(pd.read_pickle("y_train.pkl")) #y_train fora "category"
-    
+
     count_vect = CountVectorizer()
-    X_train_counts = count_vect.fit_transform(X_train)    
-    tfidf_transformer = TfidfTransformer()  
+    X_train_counts = count_vect.fit_transform(X_train)
+    tfidf_transformer = TfidfTransformer()
     X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
     clf = MultinomialNB().fit(X_train_tfidf, y_train)
     clf = MultinomialNB().fit(X_train_tfidf, y_train)
@@ -617,9 +635,9 @@ def main(report_url):
     imp_category_pred_input =  imp_description
 
     #deviation category classification
-    if not report.deviation_list: #Bypasses the classification if there are no deviations to classify       
+    if not report.deviation_list: #Bypasses the classification if there are no deviations to classify
         category_deviation = json.dumps("N/A")
-    else:     
+    else:
         category_deviation = clf.predict(count_vect.transform([dev_category_pred_input])) # prediction
         category_deviation = category_deviation.tolist() #to list before to json
         category_deviation = ' '.join(category_deviation).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
@@ -637,7 +655,7 @@ def main(report_url):
     return {
         "generic_report_content"
         :[{
-            "url" : url, 
+            "url" : url,
             "activity_number" : activity_number,
             "title" : title,
             "date" : date,
@@ -648,7 +666,7 @@ def main(report_url):
             "Myndighet" : myndighet,
         }],
         "improvement_points":
-        [{            
+        [{
             "number_of_improvements": total_number_of_improvements,
             "title_in_improvements": title_on_improvement,
             "description_of_improvement" : imp_description,
@@ -656,13 +674,13 @@ def main(report_url):
             "imp_regelhenvisning" : imp_regulations,
         }],
         "deviation_points":
-        [{    
+        [{
             "title_of_deviation" : title_on_deviation,
             "number_of_deviations" : number_of_deviations,
             "description_of_deviation" : dev_description,
             "Category_deviation" : category_deviation,
-            "dev_regelhenvisning":dev_regulations,            
-        }]                    
-    } 
-    
+            "dev_regelhenvisning":dev_regulations,
+        }]
+    }
+
 
