@@ -537,16 +537,23 @@ def main(report_url):
     # report_list.append(report.installation_name)
     # report_list.append(report.installation_type)
 
+    #Create a dataframe that will store the resutls from the report.deviation_list.
     import pandas as pd
-    cols = ['Totalt antall avvik','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger']
-    #new_report_list = []
+
+    #the columns that will be used in the dataframe. 
+    cols = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger']
+    
+    #construct the dataframe object
     df2 = pd.DataFrame(columns=cols)
     
+    # The following for-loop will first append the results to a list, before it the same results is appended to the dataframe
+    # This is currently slow and unwise, and will be fixed in a future release. 
+    # TODO: remove write to list, and only focus on the dataframe.
     for test_dev in report.deviation_list:
         #report_list.append("----")
         report_list.append("Totalt antall avvik:")
         report_list.append(test_dev.dev_cntr)
-        df2 = df2.append({'Totalt antall avvik' : test_dev.dev_cntr}, ignore_index=True)
+        df2 = df2.append({'Avviksnummer' : test_dev.dev_cntr}, ignore_index=True)
         #print("")
         report_list.append("Tittel på avvik:")
         report_list.append(test_dev.title)        
@@ -567,11 +574,18 @@ def main(report_url):
         Using pandas to transfrom the list to a dataframe. This is easier to work with when
         reading all deviations to the .JSON results.
         """ 
-   
-        
         #df2 = pd.DataFra
         # me(columns=['Totalt antall avvik', 'Tittel på avvik', 'Avvikets beskrivende tekst','Alle regelhenvisninger'])
-    df2 = df2.loc[df2.index.dropna()]
+    #cleans up the dataframe, since ignore_index = True, new entries will be appended to the proceeding index, like so:
+    
+    #     Avviksnummer                                    Tittel på avvik                         Avvikets beskrivende tekst                             Alle regelhenvisninger
+    # 0            1.0                                                NaN                                                NaN                                                NaN
+    # 1            NaN   Offshorekranene – kranførers sikt til lasteom...                                                NaN                                                NaN
+    # 2            NaN                                                NaN  Lasteområder eller deler av disse er ikke utfo...                                                NaN
+    # 3            NaN                                                NaN                                                NaN  Innretningsforskriften § 13 - Materialhåndteri...
+    #
+    # The following code will clean this, so that the "avviksnummer" matches the title, descriptoipn and regulation at the same index
+    df2 = pd.concat([df2[x].dropna().reset_index(drop=True) for x in df2], axis=1)
     print(df2)
     
     # n=1
