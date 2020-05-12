@@ -215,12 +215,12 @@ def convert_pdf_to_txt(pdf_url):
         interpreter.process_page(page)
 
     pdf_as_text = retstr.getvalue()
-    print(pdf_as_text)
+    #print(pdf_as_text)
 
     fp.close()
     device.close()
     retstr.close()
-    
+
     #print(pdf_as_text)
     return pdf_as_text
 
@@ -306,9 +306,9 @@ def find_installation_and_type(report_intro):
             installation_name = key
 
             found = True
-            break        
+            break
     print("installation_name: ", installation_name, "installation_type: ",installation_type)
-    return installation_name, installation_type 
+    return installation_name, installation_type
 
 ## Function for looping through pdf and searching for keywords
 def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
@@ -419,7 +419,7 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         if dev_title == "":
             dev_cntr = 0
             return dev_cntr
-            
+
 
         new_deviation = Deviation(dev_title, dev_text, dev_regulations, dev_cntr)
 
@@ -493,7 +493,7 @@ def main(report_url):
 
     pdf_link = find_pdf_url_on_webpage(url_soup)
     pdf_link = "https://www.ptil.no/" + pdf_link
-    
+
     print("The report that is being processed now can be found at:", pdf_link)
 
         ## Get pdf as txt
@@ -537,31 +537,59 @@ def main(report_url):
     # report_list.append(report.installation_name)
     # report_list.append(report.installation_type)
 
+    import pandas as pd
+    cols = ['Totalt antall avvik','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger']
+    #new_report_list = []
+    df2 = pd.DataFrame(columns=cols)
+    
     for test_dev in report.deviation_list:
-        # if report.deviation_list[1] == 0:
-        #     report_list.append("Totalt antall avvik:")
-        #     report_list.append("0")
-        #     #report_list.append(test_dev.title)
-        #     report_list.append("Ingen avvik funnet")
-        #     print("")
-        #     report_list.append("Avvikets beskrivende tekst:")
-        #     #report_list.append(test_dev.description)
-        #     print("")
-        #     report_list.append("Alle regelhenvisninger:")
-        #     #report_list.append(test_dev.regulations)
-        #     print("----")
-        # else:
-            report_list.append("Totalt antall avvik:")
-            report_list.append(test_dev.dev_cntr)
-            report_list.append("Tittel på avvik:")
-            report_list.append(test_dev.title)
-            #print("")
-            report_list.append("Avvikets beskrivende tekst:")
-            report_list.append(test_dev.description)
-            #print("")
-            report_list.append("Alle regelhenvisninger:")
-            report_list.append(test_dev.regulations)
-            #print("----")
+        #report_list.append("----")
+        report_list.append("Totalt antall avvik:")
+        report_list.append(test_dev.dev_cntr)
+        df2 = df2.append({'Totalt antall avvik' : test_dev.dev_cntr}, ignore_index=True)
+        #print("")
+        report_list.append("Tittel på avvik:")
+        report_list.append(test_dev.title)        
+        df2 = df2.append({'Tittel på avvik' : test_dev.title}, ignore_index=True)
+        #print("")
+        report_list.append("Avvikets beskrivende tekst:")
+        report_list.append(test_dev.description)
+        df2 = df2.append({'Avvikets beskrivende tekst' : test_dev.description}, ignore_index=True)
+        #print("")
+        report_list.append("Alle regelhenvisninger:")
+        report_list.append(test_dev.regulations)
+        df2 = df2.append({'Alle regelhenvisninger' : test_dev.regulations}, ignore_index=True)
+        #print("----")
+        #report_list.append("----")   
+
+          
+        """
+        Using pandas to transfrom the list to a dataframe. This is easier to work with when
+        reading all deviations to the .JSON results.
+        """ 
+   
+        
+        #df2 = pd.DataFra
+        # me(columns=['Totalt antall avvik', 'Tittel på avvik', 'Avvikets beskrivende tekst','Alle regelhenvisninger'])
+    df2 = df2.loc[df2.index.dropna()]
+    print(df2)
+    
+    # n=1
+    # #m=1
+    # for n in range(len(df.index)):
+    #     print(len(df.index)/8.0)
+    #     for m in range(4):
+    #         print(n*m)
+    #         #m+=1
+    #         #print(df.loc[m, 0])
+    #     # n+=1         
+    #     #print(n)
+    #     #print(df.loc[len(df.index)-7,0])
+    
+    #     n+=1
+        
+
+
 
     for test_imp in report.improvement_list:
         report_list.append("Antall forbedringspunkter:")
@@ -570,12 +598,10 @@ def main(report_url):
         report_list.append(test_imp.title)
         report_list.append("Avvikets beskrivende tekst:")
         report_list.append(test_imp.description)
-        print("")
-        print(report_list)
         report_list.append("Alle regelhenvisninger:")
         report_list.append(test_imp.regulations)
         #print("----")
-
+        #####print("Printing the report.improvement-list",report.improvement_list)
 
     # transforming to pandas dataframe to then it to convert json
     # import pandas as pd
@@ -589,6 +615,7 @@ def main(report_url):
     date = json.dumps(report.date)
     taskleader = json.dumps(report.taskleader)
     participants_in_revision = json.dumps(report.participants_in_revision)
+
     if not report.installation_name:
         installation_name = json.dumps("Navn på installasjon ikke funnet.")
         installation_type = json.dumps(report.installation_type)
@@ -609,9 +636,11 @@ def main(report_url):
         dev_description = json.dumps(test_dev.description)
         number_of_deviations = json.dumps(test_dev.dev_cntr)
         dev_regulations = json.dumps(test_dev.regulations)
+    # print("the title of imp is: ", report.__str__)
+
 
     #Improvement-stuff
-    print("the title of dev is: ", title_on_deviation)
+    #print("the title of dev is: ", title_on_deviation)
     if not report.improvement_list: #if improvement list is empty, the below will be executed
         title_on_improvement = json.dumps("Ingen forbedringspunkter funnet")
         imp_description = json.dumps("Ingen forbedringspunkt funnet")
@@ -622,7 +651,7 @@ def main(report_url):
         title_on_improvement = json.dumps(test_imp.title)
         imp_description = json.dumps(test_imp.description)
         imp_regulations = json.dumps(test_imp.regulations)
-    print("the title of imp is: ",title_on_improvement)
+    #print("the title of imp is: ", report.improvement_list)
 
     #Regulations
 
@@ -632,7 +661,7 @@ def main(report_url):
     from sklearn.feature_extraction.text import CountVectorizer
     from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
     # import csv
-    import pandas as pd
+
 
     #Trained 23.04.2020
     X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
@@ -665,6 +694,7 @@ def main(report_url):
         category_improvement = ' '.join(category_improvement).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
         category_improvement = json.dumps(category_improvement) #to json
 
+    
     return {
         "generic_report_content"
         :[{
@@ -695,5 +725,5 @@ def main(report_url):
             "dev_regelhenvisning":dev_regulations,
         }]
     }
-
+    
 
