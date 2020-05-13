@@ -587,20 +587,7 @@ def main(report_url):
     # The following code will clean this, so that the "avviksnummer" matches the title, descriptoipn and regulation at the same index
     df2 = pd.concat([df2[x].dropna().reset_index(drop=True) for x in df2], axis=1)
     print(df2)
-    
-    # n=1
-    # #m=1
-    # for n in range(len(df.index)):
-    #     print(len(df.index)/8.0)
-    #     for m in range(4):
-    #         print(n*m)
-    #         #m+=1
-    #         #print(df.loc[m, 0])
-    #     # n+=1         
-    #     #print(n)
-    #     #print(df.loc[len(df.index)-7,0])
-    
-    #     n+=1
+
         
 
 
@@ -637,19 +624,41 @@ def main(report_url):
         installation_name = json.dumps(report.installation_name)
         installation_type = json.dumps(report.installation_type)
 
-    myndighet = json.dumps(report.myndighet)
+    myndighet = json.dumps("PTIL")
 
     #Avvik-stuff'
-    if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
-        title_on_deviation = json.dumps("Ingen avvik funnet")
-        dev_description = json.dumps("Ingen avvik funnet")
-        number_of_deviations = json.dumps("0")
-        dev_regulations = json.dumps("N/A")
+    print(df2['Avviksnummer'].iloc[-1])
+    if df2['Avviksnummer'].iloc[-1] == 1:
+        if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
+            title_on_deviation = json.dumps("Ingen avvik funnet")
+            dev_description = json.dumps("Ingen avvik funnet")
+            number_of_deviations = json.dumps("0")
+            dev_regulations = json.dumps("N/A")
+        else:
+            title_on_deviation = json.dumps(test_dev.title)
+            dev_description = json.dumps(test_dev.description)
+            number_of_deviations = json.dumps(test_dev.dev_cntr)
+            dev_regulations = json.dumps(test_dev.regulations)
     else:
-        title_on_deviation = json.dumps(test_dev.title)
-        dev_description = json.dumps(test_dev.description)
-        number_of_deviations = json.dumps(test_dev.dev_cntr)
-        dev_regulations = json.dumps(test_dev.regulations)
+        print("Using the constructed dataframe to write to JSON")
+        #df_json = df2.set_index('Avviksnummer').T.to_dict('list')
+        # df_json = json.dumps(df_json)
+        df_josn = {}
+        for key, df_gb in df2.groupby('Avviksnummer'):
+            df_josn[(key)] = df_gb.to_dict('records')
+        df_json = json.dumps(df_josn, indent=1)
+        print(df_json)
+        
+        if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
+            title_on_deviation = json.dumps("Ingen avvik funnet")
+            dev_description = json.dumps("Ingen avvik funnet")
+            number_of_deviations = json.dumps("0")
+            dev_regulations = json.dumps("N/A")
+        else:
+            title_on_deviation = json.dumps(test_dev.title)
+            dev_description = json.dumps(test_dev.description)
+            number_of_deviations = json.dumps(test_dev.dev_cntr)
+            dev_regulations = json.dumps(test_dev.regulations)
     # print("the title of imp is: ", report.__str__)
 
 
@@ -709,35 +718,30 @@ def main(report_url):
         category_improvement = json.dumps(category_improvement) #to json
 
     
-    return {
-        "generic_report_content"
-        :[{
-            "url" : url,
-            "activity_number" : activity_number,
-            "title" : title,
-            "date" : date,
-            "taskleader" : taskleader,
-            "participants_in_revision" : participants_in_revision,
-            "installation_name" : installation_name,
-            "installation_type" : installation_type,
-            "Myndighet" : myndighet,
-        }],
-        "improvement_points":
-        [{
-            "number_of_improvements": total_number_of_improvements,
-            "title_in_improvements": title_on_improvement,
-            "description_of_improvement" : imp_description,
-            "category_improvement" : category_improvement,
-            "imp_regelhenvisning" : imp_regulations,
-        }],
-        "deviation_points":
-        [{
-            "title_of_deviation" : title_on_deviation,
-            "number_of_deviations" : number_of_deviations,
-            "description_of_deviation" : dev_description,
-            "Category_deviation" : category_deviation,
-            "dev_regelhenvisning":dev_regulations,
-        }]
-    }
+    # return {
+    #     "generic_report_content"
+    #     :[{
+    #         "url" : url,
+    #         "activity_number" : activity_number,
+    #         "title" : title,
+    #         "date" : date,
+    #         "taskleader" : taskleader,
+    #         "participants_in_revision" : participants_in_revision,
+    #         "installation_name" : installation_name,
+    #         "installation_type" : installation_type,
+    #         "Myndighet" : myndighet,
+    #     }],
+    #     "improvement": df_json,
+      
+    #     "deviation":
+    #     [{
+    #         "title_of_deviation" : title_on_deviation,
+    #         "number_of_deviations" : number_of_deviations,
+    #         "description_of_deviation" : dev_description,
+    #         "Category_deviation" : category_deviation,
+    #         "dev_regelhenvisning":dev_regulations,
+    #     }]
+    # }
+    return df2
     
 

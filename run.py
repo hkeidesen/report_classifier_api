@@ -8,6 +8,7 @@ from flask import jsonify
 import urllib.parse
 
 app = flask.Flask(__name__)
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
 api = Api(app)
 
 
@@ -27,24 +28,30 @@ def classification():
     return jsonify(classifier.main(report_url)), status_code, 
 
 
-@app.route('/testDB', methods=["POST"])
-def testdb():
-    #configure db
-    import pyodbc
-    from params import conn_string
-    cnxn = pyodbc.connect(conn_string)
-    cursor = cnxn.cursor()
-    result = cursor.execute("SELECT TOP 0.01 percent * FROM dbo.Avvik_og_forbedringspunkt;")
-    items =[]
-    for row in result:
-        items.append({'id':row[1]})
-    import json
-    return jsonify({'items':items})
+# @app.route('/testDB', methods=["POST"])
+# def testdb():
+#     #configure db
     
-@app.route('/test', methods=["POST"])
-def test():
-    # working URL
-    return jsonify(classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/'))
+#     import pyodbc
+#     from params import conn_string
+#     cnxn = pyodbc.connect(conn_string)
+#     cursor = cnxn.cursor()
+#     result = cursor.execute("SELECT TOP 0.01 percent * FROM dbo.Avvik_og_forbedringspunkt;")
+#     items =[]
+#     for row in result:
+#         items.append({'id':row[1]})
+#     import json
+#     return jsonify({'items':items})
+
+@app.route('/testing', methods=["POST"])
+def testing():
+    # working URL¨
+    result = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/')
+    # return jsonify({'result':result})
+    df_json = {}
+    for index, row in result.iterrows():
+        df_json[index+1] = dict(row)
+    return jsonify(flere_avvik=df_json)
 
 
 if __name__ == '__main__':
