@@ -541,40 +541,45 @@ def main(report_url):
     import pandas as pd
 
     #the columns that will be used in the dataframe. 
-    cols = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger']
+    deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)']
     
     #construct the dataframe object
-    df2 = pd.DataFrame(columns=cols)
+    df_deviation_list = pd.DataFrame(columns=deviation_columns)
     
     # The following for-loop will first append the results to a list, before it the same results is appended to the dataframe
     # This is currently slow and unwise, and will be fixed in a future release. 
     # TODO: remove write to list, and only focus on the dataframe.
-    for test_dev in report.deviation_list:
-        #report_list.append("----")
-        report_list.append("Totalt antall avvik:")
-        report_list.append(test_dev.dev_cntr)
-        df2 = df2.append({'Avviksnummer' : test_dev.dev_cntr}, ignore_index=True)
-        #print("")
-        report_list.append("Tittel på avvik:")
-        report_list.append(test_dev.title)        
-        df2 = df2.append({'Tittel på avvik' : test_dev.title}, ignore_index=True)
-        #print("")
-        report_list.append("Avvikets beskrivende tekst:")
-        report_list.append(test_dev.description)
-        df2 = df2.append({'Avvikets beskrivende tekst' : test_dev.description}, ignore_index=True)
-        #print("")
-        report_list.append("Alle regelhenvisninger:")
-        report_list.append(test_dev.regulations)
-        df2 = df2.append({'Alle regelhenvisninger' : test_dev.regulations}, ignore_index=True)
-        #print("----")
-        #report_list.append("----")   
+    for test_dev in report.deviation_list:        
+        # report_list.append("Totalt antall avvik:")
+        # report_list.append(test_dev.dev_cntr)
+        df_deviation_list = df_deviation_list.append({'Avviksnummer' : test_dev.dev_cntr}, ignore_index=True)
+        # report_list.append("Tittel på avvik:")
+        # report_list.append(test_dev.title)        
+        df_deviation_list = df_deviation_list.append({'Tittel på avvik' : test_dev.title}, ignore_index=True)
+        # report_list.append("Avvikets beskrivende tekst:")
+        # report_list.append(test_dev.description)
+        df_deviation_list = df_deviation_list.append({'Avvikets beskrivende tekst' : test_dev.description}, ignore_index=True)
+        # report_list.append("Alle regelhenvisninger:")
+        # report_list.append(test_dev.regulations)
+        df_deviation_list = df_deviation_list.append({'Alle regelhenvisninger (avvik)' : test_dev.regulations}, ignore_index=True)
 
-          
+        if len(df_deviation_list.Avviksnummer.value_counts()) < 0: # a rule that check if there are no deivations. Something needs to be retured in the df, just to make it clearer for the user
+            df_deviation_list = df_deviation_list.append({'Avviksnummer' : "N/A"}, ignore_index=True)
+            # report_list.append("Tittel på avvik:")
+            # report_list.append(test_dev.title)        
+            df_deviation_list = df_deviation_list.append({'Tittel på avvik' : "N/A"}, ignore_index=True)
+            # report_list.append("Avvikets beskrivende tekst:")
+            # report_list.append(test_dev.description)
+            df_deviation_list = df_deviation_list.append({'Avvikets beskrivende tekst' : "Ingen avvik funnet"}, ignore_index=True)
+            # report_list.append("Alle regelhenvisninger:")
+            # report_list.append(test_dev.regulations)
+            df_deviation_list = df_deviation_list.append({'Alle regelhenvisninger' : "Ingen avvik funnet"}, ignore_index=True)
+
         """
         Using pandas to transfrom the list to a dataframe. This is easier to work with when
         reading all deviations to the .JSON results.
         """ 
-        #df2 = pd.DataFra
+        #df_deviation_list = pd.DataFra
         # me(columns=['Totalt antall avvik', 'Tittel på avvik', 'Avvikets beskrivende tekst','Alle regelhenvisninger'])
     #cleans up the dataframe, since ignore_index = True, new entries will be appended to the proceeding index, like so:
     
@@ -584,26 +589,31 @@ def main(report_url):
     # 2            NaN                                                NaN  Lasteområder eller deler av disse er ikke utfo...                                                NaN
     # 3            NaN                                                NaN                                                NaN  Innretningsforskriften § 13 - Materialhåndteri...
     #
-    # The following code will clean this, so that the "avviksnummer" matches the title, descriptoipn and regulation at the same index
-    df2 = pd.concat([df2[x].dropna().reset_index(drop=True) for x in df2], axis=1)
-    print(df2)
+    # The following code will clean this, so that the "avviksnummer" matches the title, description and regulation at the same index
+    df_deviation_list = pd.concat([df_deviation_list[x].dropna().reset_index(drop=True) for x in df_deviation_list], axis=1)
+    #print(df_deviation_list)
 
         
 
-
+    improvement_columns = ['Forbedringspunkter','Tittel på forbedringspunkt','Forbedringens beskrivende tekst','Alle regelhenvisninger (forbedring)']
+    df_improvement_list = pd.DataFrame(columns=improvement_columns)
 
     for test_imp in report.improvement_list:
-        report_list.append("Antall forbedringspunkter:")
-        report_list.append(test_imp.imp_cntr)
-        report_list.append("Tittel på forbedringspunkt:")
-        report_list.append(test_imp.title)
-        report_list.append("Avvikets beskrivende tekst:")
-        report_list.append(test_imp.description)
-        report_list.append("Alle regelhenvisninger:")
-        report_list.append(test_imp.regulations)
-        #print("----")
-        #####print("Printing the report.improvement-list",report.improvement_list)
+        df_improvement_list = df_improvement_list.append({'Forbedringspunkter' : test_imp.imp_cntr}, ignore_index=True)    
+        df_improvement_list = df_improvement_list.append({'Tittel på forbedringspunkt' : test_imp.title}, ignore_index=True)     
+        df_improvement_list = df_improvement_list.append({'Forbedringens beskrivende tekst' : test_imp.description}, ignore_index=True)       
+        df_improvement_list = df_improvement_list.append({'Alle regelhenvisninger (forbedring)' : test_imp.regulations}, ignore_index=True)
 
+        if len(df_improvement_list.Forbedringspunkter.value_counts()) < 0: # a rule that check if there are no deivations. Something needs to be retured in the df, just to make it clearer for the user
+            df_improvement_list = df_improvement_list.append({'Forbedringspunkter' : "N/A"}, ignore_index=True)       
+            df_improvement_list = df_improvement_list.append({'Tittel på forbedringspunkt' : "N/A"}, ignore_index=True)   
+            df_improvement_list = df_improvement_list.append({'Avvikets beskrivende tekst' : "Ingen forbedringspunkt funnet"}, ignore_index=True)       
+            df_improvement_list = df_improvement_list.append({'Alle regelhenvisninger' : "Ingen forbedringspunkt funnet"}, ignore_index=True)
+
+    
+    df_improvement_list = pd.concat([df_improvement_list[i].dropna().reset_index(drop=True) for i in df_improvement_list], axis=1)
+    df_improvement_list = df_improvement_list.dropna()
+    print(df_improvement_list)
     # transforming to pandas dataframe to then it to convert json
     # import pandas as pd
     # df =  pd.DataFrame(report_list)
@@ -627,8 +637,8 @@ def main(report_url):
     myndighet = json.dumps("PTIL")
 
     #Avvik-stuff'
-    print(df2['Avviksnummer'].iloc[-1])
-    if df2['Avviksnummer'].iloc[-1] == 1:
+    print(df_deviation_list['Avviksnummer'].iloc[-1])
+    if df_deviation_list['Avviksnummer'].iloc[-1] == 1:
         if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
             title_on_deviation = json.dumps("Ingen avvik funnet")
             dev_description = json.dumps("Ingen avvik funnet")
@@ -641,13 +651,13 @@ def main(report_url):
             dev_regulations = json.dumps(test_dev.regulations)
     else:
         print("Using the constructed dataframe to write to JSON")
-        #df_json = df2.set_index('Avviksnummer').T.to_dict('list')
+        #df_json = df_deviation_list.set_index('Avviksnummer').T.to_dict('list')
         # df_json = json.dumps(df_json)
-        df_josn = {}
-        for key, df_gb in df2.groupby('Avviksnummer'):
-            df_josn[(key)] = df_gb.to_dict('records')
-        df_json = json.dumps(df_josn, indent=1)
-        print(df_json)
+        # df_josn = {}
+        # for key, df_gb in df_deviation_list.groupby('Avviksnummer'):
+        #     df_josn[(key)] = df_gb.to_dict('records')
+        # df_json = json.dumps(df_josn, indent=1)
+        # print(df_json)
         
         if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
             title_on_deviation = json.dumps("Ingen avvik funnet")
@@ -742,6 +752,10 @@ def main(report_url):
     #         "dev_regelhenvisning":dev_regulations,
     #     }]
     # }
-    return df2
+    print(df_deviation_list)
+    print(df_improvement_list)
+    df_all_results = pd.concat([
+        df_deviation_list, 
+        df_improvement_list], join = 'outer')
     
-
+    return df_all_results

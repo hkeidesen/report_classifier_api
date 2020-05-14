@@ -46,13 +46,35 @@ def classification():
 @app.route('/testing', methods=["POST"])
 def testing():
     # working URL¨
-    result = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/')
-    # return jsonify({'result':result})
-    df_json = {}
-    for index, row in result.iterrows():
-        df_json[index+1] = dict(row)
-    return jsonify(flere_avvik=df_json)
+    # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/') #link ok
+    all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/neptune--gjoa--palegg-etter-tilsyn-med-vedlikeholdsstyring/')
+    # print('the dataframe looks like this: ', all_results)
+    #deviations:
+    # deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py
+    # df_deviations = all_results[deviation_columns]
+    # df_json_deviations = {}    
+    # for index, row in df_deviations.iterrows():
+    #     df_json_deviations[index+1] = dict(row)
 
+    
+    #improvements
+    improvement_columns = ['Forbedringspunkter','Tittel på forbedringspunkt','Forbedringens beskrivende tekst','Alle regelhenvisninger (forbedring)'] # this is identical to the columns constructed for the improvement list in classifier.py
+    df_improvements = all_results[improvement_columns]
+    # print(df_improvements)
+    # df_improvements = df_improvements.drop_duplicates(keep=False,inplace=True)
+    # print(df_improvements) 
+    df_json_improvements = {}
+    for index_improvements, row_improvements in df_improvements.iterrows():
+        df_json_improvements[index_improvements+1] = dict(row_improvements)
+
+    df_json_improvements_dropna = {}    
+    for key, value in df_json_improvements.items():
+        if value not in df_json_improvements_dropna.values():
+            df_json_improvements_dropna[key] = value
+
+    # return jsonify(flere_avvik=df_json_deviations,  
+    #                forbedringer = df_json_improvements)
+    return jsonify(forbedringer = df_json_improvements)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
