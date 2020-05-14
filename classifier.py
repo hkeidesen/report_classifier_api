@@ -524,18 +524,18 @@ def main(report_url):
 
 
     # ## Printing the extracted information from the report
-    #print("URL for pdf:")
-    #print(report.url)
-    #report_list.append("Report URL:")
-    #report_list.append(report.url)
-    # report_list.append("activity_number:")
-    #report_list.append(report.activity_number)
-    #report_list.append(report.title)
-    # report_list.append(report.date)
-    # report_list.append(report.taskleader)
-    # report_list.append(report.participants_in_revision)
-    # report_list.append(report.installation_name)
-    # report_list.append(report.installation_type)
+    print("URL for pdf:")
+    print(report.url)
+    report_list.append("Report URL:")
+    report_list.append(report.url)
+    report_list.append("activity_number:")
+    report_list.append(report.activity_number)
+    report_list.append(report.title)
+    report_list.append(report.date)
+    report_list.append(report.taskleader)
+    report_list.append(report.participants_in_revision)
+    report_list.append(report.installation_name)
+    report_list.append(report.installation_type)
 
     #Create a dataframe that will store the resutls from the report.deviation_list.
     import pandas as pd
@@ -618,6 +618,19 @@ def main(report_url):
     # import pandas as pd
     # df =  pd.DataFrame(report_list)
     # df = df.to_json()
+    
+    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon']
+    df_general_report_stuff = pd.DataFrame(columns=general_report_columns)
+    #print('the report url is (before the df): ', report.url)
+    df_general_report_stuff = df_general_report_stuff.append({'URL' : report.url}, ignore_index=True)
+    df_general_report_stuff = df_general_report_stuff.append({'Aktivitetsnummer' : report.activity_number}, ignore_index=True)
+    df_general_report_stuff = df_general_report_stuff.append({'Rapporttittel' : report.title}, ignore_index=True)
+    df_general_report_stuff = df_general_report_stuff.append({'Dato' : report.date}, ignore_index=True)
+    df_general_report_stuff = df_general_report_stuff.append({'Oppgaveleder' : report.taskleader}, ignore_index=True)
+    df_general_report_stuff = df_general_report_stuff.append({'Deltakere_i_revisjon' : report.participants_in_revision}, ignore_index=True)
+    df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
+    df_general_report_stuff = df_general_report_stuff.dropna()
+
 
     #Report stuff
     url = json.dumps(report.url)
@@ -752,14 +765,14 @@ def main(report_url):
     #         "dev_regelhenvisning":dev_regulations,
     #     }]
     # }
-    print(df_deviation_list.head())
-    print(df_improvement_list.head())
+    # # # print(df_deviation_li
 
     # df_all_results = pd.merge([
     #     df_deviation_list, 
     #     df_improvement_list])
     
     df_all_results = df_deviation_list.join(df_improvement_list)
+    df_all_results = df_all_results.join(df_general_report_stuff)
     df_all_results.to_excel('results.xlsx')
-    print(df_all_results)
+    print(df_general_report_stuff)
     return df_all_results

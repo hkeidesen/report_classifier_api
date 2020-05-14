@@ -82,10 +82,17 @@ def testing():
     for index_improvements, row_improvements in df_improvements.iterrows():
         df_json_improvements[index_improvements+1] = dict(row_improvements)
 
-    df_json_improvements_dropna = {}    
+    #general report stuff
+    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon']
+    df_general = all_results[general_report_columns]
+    df_json_general = {}
+    for index_general, row_general in df_general.iteritems():
+        df_json_general[index_general] = dict(row_general)
+    
     # print(cleanNullTerms(df_json_improvements))
     return jsonify(avvik = df_json_deviations,
-                forbedringer = df_json_improvements)
+                forbedringer = df_json_improvements,
+                generelt = df_json_general)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
