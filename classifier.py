@@ -752,10 +752,14 @@ def main(report_url):
     #         "dev_regelhenvisning":dev_regulations,
     #     }]
     # }
-    print(df_deviation_list)
-    print(df_improvement_list)
-    df_all_results = pd.concat([
-        df_deviation_list, 
-        df_improvement_list], join = 'outer')
+    print(df_deviation_list.head())
+    print(df_improvement_list.head())
+
+    # df_all_results = pd.merge([
+    #     df_deviation_list, 
+    #     df_improvement_list])
     
+    df_all_results = df_deviation_list.join(df_improvement_list)
+    df_all_results.to_excel('results.xlsx')
+    print(df_all_results)
     return df_all_results

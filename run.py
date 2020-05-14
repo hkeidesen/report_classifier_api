@@ -45,36 +45,47 @@ def classification():
 
 @app.route('/testing', methods=["POST"])
 def testing():
+    import pandas as pd
     # working URL¨
     # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/') #link ok
     all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/neptune--gjoa--palegg-etter-tilsyn-med-vedlikeholdsstyring/')
     # print('the dataframe looks like this: ', all_results)
     #deviations:
-    # deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py
-    # df_deviations = all_results[deviation_columns]
-    # df_json_deviations = {}    
-    # for index, row in df_deviations.iterrows():
-    #     df_json_deviations[index+1] = dict(row)
+    deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py
+    df_deviations = all_results[deviation_columns]
+    
+    # this is done to remove NaN potential NaN entries
+    number_of_deviation_points = int(df_deviations['Avviksnummer'].max())
+    df_deviations = df_deviations[0:number_of_deviation_points]
+    df_json_deviations = {}#empty dict that will contain the resutls from 'result'
+    for index, row in df_deviations.iterrows():
+        df_json_deviations[index+1] = dict(row)
 
     
     #improvements
     improvement_columns = ['Forbedringspunkter','Tittel på forbedringspunkt','Forbedringens beskrivende tekst','Alle regelhenvisninger (forbedring)'] # this is identical to the columns constructed for the improvement list in classifier.py
     df_improvements = all_results[improvement_columns]
+    #in order to not carry over all the "NaN"-values that are created during the joining of the returned
+    # dataframes in classifier.py, these lines of code is needed.
+
+    #this line finds the number of improvement points, returned as an integer.
+    number_of_improvements_points = int(df_improvements['Forbedringspunkter'].max())
+
+    # print("the number of imp points are:", number_of_improvements_points)
+    # and the result is used to slice the dataframe df_improvements based on the total number of 
+    # improvement points
+    df_improvements = df_improvements[0:number_of_improvements_points]
     # print(df_improvements)
     # df_improvements = df_improvements.drop_duplicates(keep=False,inplace=True)
     # print(df_improvements) 
-    df_json_improvements = {}
+    df_json_improvements = {} #empty dict that will contain the resutls from 'result'
     for index_improvements, row_improvements in df_improvements.iterrows():
         df_json_improvements[index_improvements+1] = dict(row_improvements)
 
     df_json_improvements_dropna = {}    
-    for key, value in df_json_improvements.items():
-        if value not in df_json_improvements_dropna.values():
-            df_json_improvements_dropna[key] = value
-
-    # return jsonify(flere_avvik=df_json_deviations,  
-    #                forbedringer = df_json_improvements)
-    return jsonify(forbedringer = df_json_improvements)
+    # print(cleanNullTerms(df_json_improvements))
+    return jsonify(avvik = df_json_deviations,
+                forbedringer = df_json_improvements)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
