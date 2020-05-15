@@ -55,11 +55,16 @@ def testing():
     df_deviations = all_results[deviation_columns]
     
     # this is done to remove NaN potential NaN entries
-    number_of_deviation_points = int(df_deviations['Avviksnummer'].max())
-    df_deviations = df_deviations[0:number_of_deviation_points]
     df_json_deviations = {}#empty dict that will contain the resutls from 'result'
-    for index, row in df_deviations.iterrows():
-        df_json_deviations[index+1] = dict(row)
+    # print(df_deviations)
+    if df_deviations['Avviksnummer'].isnull().values.any():
+        print("no entries in dataframe")
+    else:
+        number_of_deviation_points = int(df_deviations['Avviksnummer'].max())
+        df_deviations = df_deviations[0:number_of_deviation_points]
+
+        for index, row in df_deviations.iterrows():
+            df_json_deviations[index+1] = dict(row)
 
     
     #improvements
@@ -69,18 +74,22 @@ def testing():
     # dataframes in classifier.py, these lines of code is needed.
 
     #this line finds the number of improvement points, returned as an integer.
-    number_of_improvements_points = int(df_improvements['Forbedringspunkter'].max())
+    df_json_improvements = {}
+    if df_improvements['Forbedringspunkter'].isnull().values.any():
+        print("no entries in dataframe")
+    else:
+        number_of_improvements_points = int(df_improvements['Forbedringspunkter'].max())
 
-    # print("the number of imp points are:", number_of_improvements_points)
-    # and the result is used to slice the dataframe df_improvements based on the total number of 
-    # improvement points
-    df_improvements = df_improvements[0:number_of_improvements_points]
-    # print(df_improvements)
-    # df_improvements = df_improvements.drop_duplicates(keep=False,inplace=True)
-    # print(df_improvements) 
-    df_json_improvements = {} #empty dict that will contain the resutls from 'result'
-    for index_improvements, row_improvements in df_improvements.iterrows():
-        df_json_improvements[index_improvements+1] = dict(row_improvements)
+        # print("the number of imp points are:", number_of_improvements_points)
+        # and the result is used to slice the dataframe df_improvements based on the total number of 
+        # improvement points
+        df_improvements = df_improvements[0:number_of_improvements_points]
+        # print(df_improvements)
+        # df_improvements = df_improvements.drop_duplicates(keep=False,inplace=True)
+        # print(df_improvements) 
+         #empty dict that will contain the resutls from 'result'
+        for index_improvements, row_improvements in df_improvements.iterrows():
+            df_json_improvements[index_improvements+1] = dict(row_improvements)
 
     #general report stuff
     general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon']

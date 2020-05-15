@@ -83,7 +83,7 @@ def find_pdf_url_on_webpage(soup):
         pdf_types = link.findAll('h3')
         for pdf_type in pdf_types:
             tmp = pdf_type.get_text()
-            print("the temp is:", tmp, '\n')
+            # print("the temp is:", tmp, '\n')
             print("Getting the report link...")
             if "Rapport" in tmp or "rapport" in tmp or "tilsynsrapport" in tmp or "Tilsynsrapport" in tmp:
                 report_link = link.get('href')
@@ -247,15 +247,25 @@ def find_taskleader(idx, report_text):
 
 ## Function for finding report title
 def find_report_title(idx, report_text):
-
+    
+    #THIS CURRENTLY WORKS FINE-ish!
     idx += 1
 
     while report_text[idx] != " " and report_text[idx] != "":
+        print(report_text[idx])
         report_title = ""
         report_title += report_text[idx]
         idx += 1
     print("The report title is: " + report_title)
     return report_title
+    
+    # idx += 1
+    # while not re.compile('2\s+').match(report_text[idx]):
+    #     report_title = ""
+    #     report_title += report_title[idx]
+    #     idx +=1
+
+    # return report_title
 
 #finding myndighet
 def find_myndighet(idx, report_text):
@@ -312,6 +322,7 @@ def find_installation_and_type(report_intro):
 
 ## Function for looping through pdf and searching for keywords
 def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
+   
     for idx, line in enumerate(report_as_a_list_of_sentences):
         #print(idx, line)
         if ("Deltakere i revisjonslaget" in line) or ("Deltakarar i revisjonslaget" in line):
@@ -523,19 +534,19 @@ def main(report_url):
     #print("Successfully written database")
 
 
-    # ## Printing the extracted information from the report
-    print("URL for pdf:")
-    print(report.url)
-    report_list.append("Report URL:")
-    report_list.append(report.url)
-    report_list.append("activity_number:")
-    report_list.append(report.activity_number)
-    report_list.append(report.title)
-    report_list.append(report.date)
-    report_list.append(report.taskleader)
-    report_list.append(report.participants_in_revision)
-    report_list.append(report.installation_name)
-    report_list.append(report.installation_type)
+    # ## Printing the extracted information from the report ## MAYBE THIS IS NOT NEEDED ANYMORE.
+    # print("URL for pdf:")
+    # print(report.url)
+    # report_list.append("Report URL:")
+    # report_list.append(report.url)
+    # report_list.append("activity_number:")
+    # report_list.append(report.activity_number)
+    # report_list.append(report.title)
+    # report_list.append(report.date)
+    # report_list.append(report.taskleader)
+    # report_list.append(report.participants_in_revision)
+    # report_list.append(report.installation_name)
+    # report_list.append(report.installation_type)
 
     #Create a dataframe that will store the resutls from the report.deviation_list.
     import pandas as pd
@@ -627,10 +638,12 @@ def main(report_url):
     df_general_report_stuff = df_general_report_stuff.append({'Rapporttittel' : report.title}, ignore_index=True)
     df_general_report_stuff = df_general_report_stuff.append({'Dato' : report.date}, ignore_index=True)
     df_general_report_stuff = df_general_report_stuff.append({'Oppgaveleder' : report.taskleader}, ignore_index=True)
-    df_general_report_stuff = df_general_report_stuff.append({'Deltakere_i_revisjon' : report.participants_in_revision}, ignore_index=True)
-    df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
-    df_general_report_stuff = df_general_report_stuff.dropna()
+    df_general_report_stuff = df_general_report_stuff.append({'Deltakere_i_revisjon' : report.participants_in_revision}, ignore_index=True) # for some reason, only the last entry is added if the participants are spread over multiple lines
+    #df_general_report_stuff = 1
 
+    df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
+    df_general_report_stuff = df_general_report_stuff.dropna() 
+       
 
     #Report stuff
     url = json.dumps(report.url)
