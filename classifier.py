@@ -20,7 +20,7 @@ from app.src.Installation_Type_Dictionary import Installations
 class Report:
 
     def __init__(self, year, date, activity_number, title, taskleader,
-                 participants_in_revision, count_participants, url, installation_name, installation_type, myndighet):
+                 participants_in_revision, count_participants, url, installation_name, installation_type, myndighet, number_of_participants, total_number_of_findings, operator):
         #self.authority = "PTIL"'
         self.year = year
         self.date = date
@@ -37,6 +37,9 @@ class Report:
         self.improvement_list = []
 
         self.myndighet = myndighet
+        self.number_of_participants = number_of_participants
+        self.total_number_of_findings = total_number_of_findings
+        self.operator = operator
 
 class Deviation:
 
@@ -261,13 +264,11 @@ def find_report_title(idx, report_text):
             continue
         else:
             report_title = ""
-            # print("report_text[2]=",report_text[2])
-            # print("report_text[3]=", report_text[2])
             # print("The IDX is", idx)
             # The reason the report_text[9] and [10] are used is because if the title of the report is on two lines of code, the code will only report the last line of the title.
             # These sepcific numbers have been found by printing the idx, identify what idx gives the report title, and then assigning these numbers manually. If the idx changes (where idx is initially assigned above),
             # it is possible that the two values needs changig also.
-            report_title = report_text[9] + report_text[10] 
+            report_title = report_text[9] + report_text[10] # If, for some reason, the index 9 and 10 needs to change in the future, execute print("report_text[",idx,"]= ", report_text[idx]) 
     return report_title
 
 #finding myndighet
@@ -332,7 +333,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         if ("Deltakere i revisjonslaget" in line) or ("Deltakarar i revisjonslaget" in line):
             participants_in_revision = find_participants_in_revision(idx, report_as_a_list_of_sentences)
             # print("trying to find the participants in the team.")
-
+            number_of_participants = participants_in_revision.count(",") + 1 # the number of commas in participants_in_revision + 1 indicates the number of participants 
         if ("Oppgaveleder" in line) or ("Oppgåveleiar" in line):
             taskleader = find_taskleader(idx, report_as_a_list_of_sentences)
 
@@ -341,7 +342,9 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
 
         if "Dato" in line:
             date = find_date(idx, report_as_a_list_of_sentences)
-
+            year = date[-5:] #returns the years from the date (the structre of the date here is very important!!!!)
+            print(date)
+            print(year)
         if "Rapporttittel" in line:
             title = find_report_title(idx, report_as_a_list_of_sentences)
             if title[0].isupper(): # This code block can be deleted, as it is possible that the title will no longer be cut off
@@ -358,13 +361,15 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         else:
             myndighet = ""
 
-        import csv
-        with open("report_as_sentence.csv", 'w', newline='', encoding='utf-8') as csvfile:
-            csv_writer = csv.writer(csvfile)
-            csv_writer.writerow(report_as_a_list_of_sentences)
+        # import csv
+        # with open("report_as_sentence.csv", 'w', newline='', encoding='utf-8') as csvfile:
+        #     csv_writer = csv.writer(csvfile)
+        #     csv_writer.writerow(report_as_a_list_of_sentences)
 
+        total_number_of_findings = 0
+        operator = ""
 
-    return participants_in_revision, taskleader, activity_number, date, title, installation_name, installation_type, myndighet
+    return participants_in_revision, taskleader, activity_number, date, title, installation_name, installation_type, myndighet, number_of_participants, total_number_of_findings, operator
 
 ## Function for finding the title of a deviation, "avvik"
 def find_deviation_title(deviation):
@@ -516,17 +521,17 @@ def main(report_url):
     # print(pdfText)
 
         ## Split on "\n"
-    pdf_as_list_of_words = pdfText.split("\n") # SJEKK DENNE
+    pdf_as_list_of_words = pdfText.split("\n")  
     # pdf_as_list_of_words = pdfText
     # print('pdf_as_list_of_words', pdf_as_list_of_words)
         ## Looping through report and searching for keywords (returned as string)
-    participants_in_revision, taskleader, activity_number, report_date, report_title, installation_name, installation_type, myndighet = find_relevant_info_in_pdf(pdf_as_list_of_words)
+    participants_in_revision, taskleader, activity_number, report_date, report_title, installation_name, installation_type, myndighet, number_of_participants, total_number_of_findings, operator = find_relevant_info_in_pdf(pdf_as_list_of_words)
 
 
         ## Make a report object
     report = Report(report_date.strip(' ')[-4:], report_date, activity_number, report_title, taskleader,
                    participants_in_revision, participants_in_revision.count(",") + participants_in_revision.count(" og ") + 1,
-                   pdf_link, installation_name, installation_type, myndighet)
+                   pdf_link, installation_name, installation_type, myndighet, number_of_participants, total_number_of_findings, operator)
 
         ## Find deviations and improvement points, make objects then add them to the report
     find_relevant_info_on_web(url_soup, report)
@@ -556,6 +561,13 @@ def main(report_url):
 
     #Create a dataframe that will store the resutls from the report.deviation_list.
     import pandas as pd
+
+    """
+    IMPORTANT!
+    Since the results are returned as a pandas dataframe in main(), when adding more entries to the dataframe, changes in run.py are also needed to have a successfull implementation 
+    of the new dataframe entries. This is neccessary to perform as there is some post processeing of the resutls in run.py to ensure correct JSON-formatting in run.py. 
+    Most likely the only change is to ensure that the column in the dataframes in this file matches the corresponding column in run.py.
+    """
 
     #the columns that will be used in the dataframe. 
     deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)']
@@ -636,7 +648,7 @@ def main(report_url):
     # df =  pd.DataFrame(report_list)
     # df = df.to_json()
     
-    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon']
+    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År"]
     df_general_report_stuff = pd.DataFrame(columns=general_report_columns)
     #print('the report url is (before the df): ', report.url)
     df_general_report_stuff = df_general_report_stuff.append({'URL' : report.url}, ignore_index=True)
@@ -644,7 +656,10 @@ def main(report_url):
     df_general_report_stuff = df_general_report_stuff.append({'Rapporttittel' : report.title}, ignore_index=True)
     df_general_report_stuff = df_general_report_stuff.append({'Dato' : report.date}, ignore_index=True)
     df_general_report_stuff = df_general_report_stuff.append({'Oppgaveleder' : report.taskleader}, ignore_index=True)
-    df_general_report_stuff = df_general_report_stuff.append({'Deltakere_i_revisjon' : report.participants_in_revision}, ignore_index=True) # for some reason, only the last entry is added if the participants are spread over multiple lines
+    df_general_report_stuff = df_general_report_stuff.append({'Deltakere_i_revisjon' : report.participants_in_revision}, ignore_index=True)
+    df_general_report_stuff = df_general_report_stuff.append({'Myndighet' : "PTIL"}, ignore_index=True)
+    df_general_report_stuff = df_general_report_stuff.append({"Tilsynslaget størrelse": report.number_of_participants}, ignore_index = True)
+    df_general_report_stuff = df_general_report_stuff.append({"År": report.year}, ignore_index = True)
     #df_general_report_stuff = 1
 
     df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
@@ -759,36 +774,6 @@ def main(report_url):
         category_improvement = ' '.join(category_improvement).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
         category_improvement = json.dumps(category_improvement) #to json
 
-    
-    # return {
-    #     "generic_report_content"
-    #     :[{
-    #         "url" : url,
-    #         "activity_number" : activity_number,
-    #         "title" : title,
-    #         "date" : date,
-    #         "taskleader" : taskleader,
-    #         "participants_in_revision" : participants_in_revision,
-    #         "installation_name" : installation_name,
-    #         "installation_type" : installation_type,
-    #         "Myndighet" : myndighet,
-    #     }],
-    #     "improvement": df_json,
-      
-    #     "deviation":
-    #     [{
-    #         "title_of_deviation" : title_on_deviation,
-    #         "number_of_deviations" : number_of_deviations,
-    #         "description_of_deviation" : dev_description,
-    #         "Category_deviation" : category_deviation,
-    #         "dev_regelhenvisning":dev_regulations,
-    #     }]
-    # }
-    # # # print(df_deviation_li
-
-    # df_all_results = pd.merge([
-    #     df_deviation_list, 
-    #     df_improvement_list])
     
     df_all_results = df_deviation_list.join(df_improvement_list)
     df_all_results = df_all_results.join(df_general_report_stuff)
