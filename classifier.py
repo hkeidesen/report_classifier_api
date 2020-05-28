@@ -197,10 +197,6 @@ def convert_pdf_to_txt(pdf_url):
     except (http.client.IncompleteRead) as e:
         f = e.partial
         print(datetime.now())
-        print("An error with the link has occured. Good luck.")
-
-
-
     #f = urlopen(pdf_url).read()
 
     # f = requestObj
@@ -227,13 +223,18 @@ def convert_pdf_to_txt(pdf_url):
 ## Function for finding participants in revision team
 def find_participants_in_revision(idx, report_text):
 
-    idx += 1
+    idx += -1
 
     while report_text[idx] != " " and report_text[idx] != "":
         participants_in_revision = ""
         participants_in_revision += report_text[idx]
         idx += 1
-    #print("The parcticipants were: ", participants_in_revision)
+        # print("report_text[",idx,"]= ", report_text[idx])
+    print("The parcticipants were: ", participants_in_revision)
+    if "," not in participants_in_revision: # This check is to remedy the case when the there are too many participants to fit all of them in one line, casue that case will only return the last entry.
+        print("There are too few participants...")
+        participants_in_revision = ""
+        participants_in_revision = report_text[20] + report_text[21] # these numbers are identificed by running print("report_text[",idx,"]= ", report_text[idx])
     return participants_in_revision
 
 ## Function for finding task leader
@@ -248,31 +249,34 @@ def find_taskleader(idx, report_text):
 ## Function for finding report title
 def find_report_title(idx, report_text):
     
-    #THIS CURRENTLY WORKS FINE-ish!
-    idx += 1
+    
+    idx += -1 # Trying with idx += -1
 
     while report_text[idx] != " " and report_text[idx] != "":
-        print(report_text[idx])
         report_title = ""
         report_title += report_text[idx]
         idx += 1
-    print("The report title is: " + report_title)
+    #print("The report title is: " + report_title)
+        if report_title[0].isupper(): # A check to see if the title has been cut-off. See comment below on how this was fixed (a valid title would have an upper-case as first letter)
+            continue
+        else:
+            report_title = ""
+            # print("report_text[2]=",report_text[2])
+            # print("report_text[3]=", report_text[2])
+            # print("The IDX is", idx)
+            # The reason the report_text[9] and [10] are used is because if the title of the report is on two lines of code, the code will only report the last line of the title.
+            # These sepcific numbers have been found by printing the idx, identify what idx gives the report title, and then assigning these numbers manually. If the idx changes (where idx is initially assigned above),
+            # it is possible that the two values needs changig also.
+            report_title = report_text[9] + report_text[10] 
     return report_title
-    
-    # idx += 1
-    # while not re.compile('2\s+').match(report_text[idx]):
-    #     report_title = ""
-    #     report_title += report_title[idx]
-    #     idx +=1
-
-    # return report_title
 
 #finding myndighet
 def find_myndighet(idx, report_text):
     idx += 1
     myndighet = ""
     myndighet += report_text[idx]
-
+    if myndighet == "":    # As of right now, there is no obvious indication in the report that the "myndighet" is PTIL, however, it is a certainty that there can be no other governing agent other than PTILs report that will be classified by this script
+        myndighet = "PTIL" # Therefore, the "myndighet" is pragramatically assigned with PTIL
     return myndighet
 
 ## Function for finding activity number
@@ -317,7 +321,7 @@ def find_installation_and_type(report_intro):
 
             found = True
             break
-    print("installation_name: ", installation_name, "installation_type: ",installation_type)
+    #print("installation_name: ", installation_name, "installation_type: ",installation_type)
     return installation_name, installation_type
 
 ## Function for looping through pdf and searching for keywords
@@ -327,7 +331,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         #print(idx, line)
         if ("Deltakere i revisjonslaget" in line) or ("Deltakarar i revisjonslaget" in line):
             participants_in_revision = find_participants_in_revision(idx, report_as_a_list_of_sentences)
-            print("trying to find the participants in the team.")
+            # print("trying to find the participants in the team.")
 
         if ("Oppgaveleder" in line) or ("Oppgåveleiar" in line):
             taskleader = find_taskleader(idx, report_as_a_list_of_sentences)
@@ -340,7 +344,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
 
         if "Rapporttittel" in line:
             title = find_report_title(idx, report_as_a_list_of_sentences)
-            if title[0].isupper():
+            if title[0].isupper(): # This code block can be deleted, as it is possible that the title will no longer be cut off
                 continue
             else:
                 print("The title has been cut off.")
@@ -509,10 +513,12 @@ def main(report_url):
 
         ## Get pdf as txt
     pdfText = convert_pdf_to_txt(pdf_link)
+    # print(pdfText)
 
         ## Split on "\n"
-    pdf_as_list_of_words = pdfText.split("\n")# SJEKK DENNE
-
+    pdf_as_list_of_words = pdfText.split("\n") # SJEKK DENNE
+    # pdf_as_list_of_words = pdfText
+    # print('pdf_as_list_of_words', pdf_as_list_of_words)
         ## Looping through report and searching for keywords (returned as string)
     participants_in_revision, taskleader, activity_number, report_date, report_title, installation_name, installation_type, myndighet = find_relevant_info_in_pdf(pdf_as_list_of_words)
 
@@ -592,7 +598,7 @@ def main(report_url):
         """ 
         #df_deviation_list = pd.DataFra
         # me(columns=['Totalt antall avvik', 'Tittel på avvik', 'Avvikets beskrivende tekst','Alle regelhenvisninger'])
-    #cleans up the dataframe, since ignore_index = True, new entries will be appended to the proceeding index, like so:
+    # Cleans up the dataframe, since ignore_index = True, new entries will be appended to the proceeding index, like so:
     
     #     Avviksnummer                                    Tittel på avvik                         Avvikets beskrivende tekst                             Alle regelhenvisninger
     # 0            1.0                                                NaN                                                NaN                                                NaN
@@ -624,7 +630,7 @@ def main(report_url):
     
     df_improvement_list = pd.concat([df_improvement_list[i].dropna().reset_index(drop=True) for i in df_improvement_list], axis=1)
     df_improvement_list = df_improvement_list.dropna()
-    print(df_improvement_list)
+    # print(df_improvement_list)
     # transforming to pandas dataframe to then it to convert json
     # import pandas as pd
     # df =  pd.DataFrame(report_list)
@@ -663,7 +669,7 @@ def main(report_url):
     myndighet = json.dumps("PTIL")
 
     #Avvik-stuff'
-    print(df_deviation_list['Avviksnummer'].iloc[-1])
+    # print(df_deviation_list['Avviksnummer'].iloc[-1])
     if df_deviation_list['Avviksnummer'].iloc[-1] == 1:
         if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
             title_on_deviation = json.dumps("Ingen avvik funnet")
@@ -787,5 +793,5 @@ def main(report_url):
     df_all_results = df_deviation_list.join(df_improvement_list)
     df_all_results = df_all_results.join(df_general_report_stuff)
     df_all_results.to_excel('results.xlsx')
-    print(df_general_report_stuff)
+    # print(df_general_report_stuff)
     return df_all_results
