@@ -204,6 +204,7 @@ owner = {
     'North Atlantic Norway Ltd':'West Mira',
     'North Atlantic Norway Ltd':'West Phoenix',
     'North Atlantic Norway Ltd':'West Venture',
+    'North Atlantic Norway Ltd':'West Bollsta',
     'Ocean Rig ASA':'Leiv Eiriksson',
     'Odfjell Drilling AS':'Basis',
     'Odfjell Drilling AS':'Deepsea Atlantic',

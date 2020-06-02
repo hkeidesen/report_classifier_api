@@ -16,6 +16,7 @@ from bs4 import BeautifulSoup
 from time import sleep
 
 from app.src.Installation_Type_Dictionary import Installations
+from app.src.owner import owner
 
 class Report:
 
@@ -32,7 +33,7 @@ class Report:
         self.url = url
         self.installation_name = installation_name
         self.installation_type = installation_type
-
+        
         self.deviation_list = []
         self.improvement_list = []
 
@@ -319,11 +320,16 @@ def find_installation_and_type(report_intro):
         if key in report_intro:
             installation_type = Installations.get(key)
             installation_name = key
+            for key_owner in owner:
+                installation_owner = owner.get(key_owner)
+                     
 
             found = True
             break
-    #print("installation_name: ", installation_name, "installation_type: ",installation_type)
-    return installation_name, installation_type
+    print("installation_name: ", installation_name, "installation_type: ",installation_type, "Installation_owner", installation_owner)
+
+    return installation_name, installation_type, installation_owner
+
 
 ## Function for looping through pdf and searching for keywords
 def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
@@ -354,7 +360,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
 
         if bool(re.compile('1\s+').match(line)):
             intro = find_introduction(idx, report_as_a_list_of_sentences)
-            installation_name, installation_type = find_installation_and_type(intro)
+            installation_name, installation_type, Installation_owner = find_installation_and_type(intro)
 
         if "Myndighet" in line:
             myndighet = find_myndighet(idx, report_as_a_list_of_sentences)
@@ -476,6 +482,9 @@ def find_relevant_info_on_web(webpage_as_soup, report):
     #print("")
 
 
+        #CATEGORY PREDICTION
+
+
 
 def main(report_url):
     print("Running main()")
@@ -544,6 +553,27 @@ def main(report_url):
 
     #print("Successfully written database")
 
+    def category_prediction(description):
+        from sklearn.naive_bayes import MultinomialNB
+        from sklearn.feature_extraction.text import CountVectorizer
+        from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
+        import pandas as pd
+        # import csv
+
+
+        #Trained 23.04.2020
+        X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
+        y_train = pd.Series(pd.read_pickle("y_train.pkl")) #y_train fora "category"
+        print("Running prediction")
+        count_vect = CountVectorizer()
+        X_train_counts = count_vect.fit_transform(X_train)
+        tfidf_transformer = TfidfTransformer()
+        X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+        clf = MultinomialNB().fit(X_train_tfidf, y_train)
+        clf = MultinomialNB().fit(X_train_tfidf, y_train)
+        predicted_category = clf.predict(count_vect.transform([description]))
+        print(predicted_category)
+        return predicted_category
 
     # ## Printing the extracted information from the report ## MAYBE THIS IS NOT NEEDED ANYMORE.
     # print("URL for pdf:")
@@ -624,7 +654,7 @@ def main(report_url):
 
         
 
-    improvement_columns = ['Forbedringspunkter','Tittel på forbedringspunkt','Forbedringens beskrivende tekst','Alle regelhenvisninger (forbedring)']
+    improvement_columns = ['Forbedringspunkter','Tittel på forbedringspunkt','Forbedringens beskrivende tekst','Alle regelhenvisninger (forbedring)', 'Kategori (forbedringer)']
     df_improvement_list = pd.DataFrame(columns=improvement_columns)
 
     for test_imp in report.improvement_list:
@@ -632,6 +662,7 @@ def main(report_url):
         df_improvement_list = df_improvement_list.append({'Tittel på forbedringspunkt' : test_imp.title}, ignore_index=True)     
         df_improvement_list = df_improvement_list.append({'Forbedringens beskrivende tekst' : test_imp.description}, ignore_index=True)       
         df_improvement_list = df_improvement_list.append({'Alle regelhenvisninger (forbedring)' : test_imp.regulations}, ignore_index=True)
+        df_improvement_list = df_improvement_list.append({'Kategori (forbedringer)' : "category_prediction(test_imp.description)"}, ignore_index=True)
 
         if len(df_improvement_list.Forbedringspunkter.value_counts()) < 0: # a rule that check if there are no deivations. Something needs to be retured in the df, just to make it clearer for the user
             df_improvement_list = df_improvement_list.append({'Forbedringspunkter' : "N/A"}, ignore_index=True)       
@@ -647,8 +678,20 @@ def main(report_url):
     # import pandas as pd
     # df =  pd.DataFrame(report_list)
     # df = df.to_json()
+
+    # Adding all findings from deviations and improvements. Using and if-statement that chekcs of anything has been returend from the dataframe. If emtpy during 
+    # access attempt, a keyerror will be rasied. This method remedies that.
+
+    # total_numer_of_findings is the sum of deviations and improvement points.
+    total_number_of_findings = 0
+    if not df_deviation_list.empty:
+        total_number_of_findings = df_deviation_list.iloc[-1]['Avviksnummer']
+    if not df_improvement_list.empty:
+        total_number_of_findings += df_improvement_list.iloc[-1]['Forbedringspunkter']
+
+    print(total_number_of_findings)
     
-    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År"]
+    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År", "Antall funn"]
     df_general_report_stuff = pd.DataFrame(columns=general_report_columns)
     #print('the report url is (before the df): ', report.url)
     df_general_report_stuff = df_general_report_stuff.append({'URL' : report.url}, ignore_index=True)
@@ -660,6 +703,7 @@ def main(report_url):
     df_general_report_stuff = df_general_report_stuff.append({'Myndighet' : "PTIL"}, ignore_index=True)
     df_general_report_stuff = df_general_report_stuff.append({"Tilsynslaget størrelse": report.number_of_participants}, ignore_index = True)
     df_general_report_stuff = df_general_report_stuff.append({"År": report.year}, ignore_index = True)
+    df_general_report_stuff = df_general_report_stuff.append({"Antall funn": total_number_of_findings}, ignore_index = True)
     #df_general_report_stuff = 1
 
     df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
@@ -736,45 +780,30 @@ def main(report_url):
     #Regulations
 
 
-    #CATEGORY PREDICTION
-    from sklearn.naive_bayes import MultinomialNB
-    from sklearn.feature_extraction.text import CountVectorizer
-    from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
-    # import csv
 
 
-    #Trained 23.04.2020
-    X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
-    y_train = pd.Series(pd.read_pickle("y_train.pkl")) #y_train fora "category"
+#     dev_category_pred_input = dev_description #test_dev.description
+#     imp_category_pred_input =  imp_description
 
-    count_vect = CountVectorizer()
-    X_train_counts = count_vect.fit_transform(X_train)
-    tfidf_transformer = TfidfTransformer()
-    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-    clf = MultinomialNB().fit(X_train_tfidf, y_train)
-    clf = MultinomialNB().fit(X_train_tfidf, y_train)
-    dev_category_pred_input = dev_description #test_dev.description
-    imp_category_pred_input =  imp_description
+# #deviation category classification
+#     if not report.deviation_list: #Bypasses the classification if there are no deviations to classify
+#         category_deviation = json.dumps("N/A")
+#     else:
+#         category_deviation = clf.predict(count_vect.transform([dev_category_pred_input])) # prediction
+#         category_deviation = category_deviation.tolist() #to list before to json
+#         category_deviation = ' '.join(category_deviation).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
+#         category_deviation = json.dumps(category_deviation) #to json
 
-    #deviation category classification
-    if not report.deviation_list: #Bypasses the classification if there are no deviations to classify
-        category_deviation = json.dumps("N/A")
-    else:
-        category_deviation = clf.predict(count_vect.transform([dev_category_pred_input])) # prediction
-        category_deviation = category_deviation.tolist() #to list before to json
-        category_deviation = ' '.join(category_deviation).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
-        category_deviation = json.dumps(category_deviation) #to json
+#     #improvement category classiification
+#     if not report.improvement_list:
+#         category_improvement = "N/A"
+#     else:
+#         category_improvement = clf.predict(count_vect.transform([imp_category_pred_input])) # prediction
+#         category_improvement = category_improvement.tolist() #to list before to json
+#         category_improvement = ' '.join(category_improvement).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
+#         category_improvement = json.dumps(category_improvement) #to json
 
-    #improvement category classiification
-    if not report.improvement_list:
-        category_improvement = "N/A"
-    else:
-        category_improvement = clf.predict(count_vect.transform([imp_category_pred_input])) # prediction
-        category_improvement = category_improvement.tolist() #to list before to json
-        category_improvement = ' '.join(category_improvement).replace('[\'','').split() # trying to remove "[ ]" from the results, but no luck so far
-        category_improvement = json.dumps(category_improvement) #to json
-
-    
+        
     df_all_results = df_deviation_list.join(df_improvement_list)
     df_all_results = df_all_results.join(df_general_report_stuff)
     df_all_results.to_excel('results.xlsx')

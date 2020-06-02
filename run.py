@@ -47,18 +47,20 @@ def classification():
 def testing():
     import pandas as pd
     # working URL¨
-    all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/') #link ok
+    # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/') #link ok
     # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/neptune--gjoa--palegg-etter-tilsyn-med-vedlikeholdsstyring/')
+    all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/okea-draugen-materialhandtering-kran-og-loft-arbeid-i-hoyden-og-arbeidsmiljo/')
     # print('the dataframe looks like this: ', all_results)
     #deviations:
     deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py
     df_deviations = all_results[deviation_columns]
     
     # this is done to remove NaN potential NaN entries
-    df_json_deviations = {}#empty dict that will contain the resutls from 'result'
+    df_json_deviations = {} # empty dict that will contain the resutls from 'result'
     # print(df_deviations)
     if df_deviations['Avviksnummer'].isnull().values.any():
-        print("no entries in dataframe")
+        print(df_deviations['Avviksnummer'].isnull().values.any())
+        print("no entries in dataframe (avvik, run.py)")
     else:
         number_of_deviation_points = int(df_deviations['Avviksnummer'].max())
         df_deviations = df_deviations[0:number_of_deviation_points]
@@ -67,16 +69,17 @@ def testing():
             df_json_deviations[index+1] = dict(row)
 
     
-    #improvements
-    improvement_columns = ['Forbedringspunkter','Tittel på forbedringspunkt','Forbedringens beskrivende tekst','Alle regelhenvisninger (forbedring)'] # this is identical to the columns constructed for the improvement list in classifier.py
+    # improvements
+    improvement_columns = ['Forbedringspunkter','Tittel på forbedringspunkt','Forbedringens beskrivende tekst','Alle regelhenvisninger (forbedring)','Kategori (forbedringer)'] # this is identical to the columns constructed for the improvement list in classifier.py
     df_improvements = all_results[improvement_columns]
-    #in order to not carry over all the "NaN"-values that are created during the joining of the returned
+    # in order to not carry over all the "NaN"-values that are created during the joining of the returned
     # dataframes in classifier.py, these lines of code is needed.
 
-    #this line finds the number of improvement points, returned as an integer.
+    # this line finds the number of improvement points, returned as an integer.
     df_json_improvements = {}
-    if df_improvements['Forbedringspunkter'].isnull().values.any():
-        print("no entries in dataframe")
+    if df_improvements.empty:#df_improvements['Forbedringspunkter'].isnull().values.any():
+        print(df_improvements['Forbedringspunkter'].isnull().values.any())
+        print("no entries in dataframe (forbedringspunkter, run.py)")
     else:
         number_of_improvements_points = int(df_improvements['Forbedringspunkter'].max())
 
@@ -91,8 +94,8 @@ def testing():
         for index_improvements, row_improvements in df_improvements.iterrows():
             df_json_improvements[index_improvements+1] = dict(row_improvements)
 
-    #general report stuff
-    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År"]
+    # general report stuff
+    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År", "Antall funn"]
     df_general = all_results[general_report_columns]
     df_json_general = {}
     for index_general, row_general in df_general.iteritems():
