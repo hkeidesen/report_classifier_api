@@ -52,9 +52,9 @@ def testing():
     all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/okea-draugen-materialhandtering-kran-og-loft-arbeid-i-hoyden-og-arbeidsmiljo/')
     # print('the dataframe looks like this: ', all_results)
     #deviations:
-    deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py
+    deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)', 'Kategori (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py
     df_deviations = all_results[deviation_columns]
-    
+    print(df_deviations)
     # this is done to remove NaN potential NaN entries
     df_json_deviations = {} # empty dict that will contain the resutls from 'result'
     # print(df_deviations)
@@ -97,9 +97,15 @@ def testing():
     # general report stuff
     general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År", "Antall funn"]
     df_general = all_results[general_report_columns]
+    # To avoid all the NaNs that are being created, df_general.head(1) is used to discard all rows containing NaN. 
+    df_general = df_general.head(1)
     df_json_general = {}
+    # df_general = df_general.iloc[0]
     for index_general, row_general in df_general.iteritems():
         df_json_general[index_general] = dict(row_general)
+        # print(df_json_general)
+        # from math import isnan
+   
     
     # print(cleanNullTerms(df_json_improvements))
     return jsonify(avvik = df_json_deviations,

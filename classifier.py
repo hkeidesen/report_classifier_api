@@ -44,23 +44,23 @@ class Report:
 
 class Deviation:
 
-    def __init__(self, title, description, regulations, dev_cntr):
+    def __init__(self, title, description, regulations, dev_cntr, dev_category):
         self.finding_type = "Avvik"
         self.title = title
         self.description = description
         self.regulations = regulations
         self.dev_cntr = dev_cntr
-        #self.cathegory = cathegory
+        self.dev_category = dev_category
 
 class Improvementpoint:
 
-    def __init__(self, title, description, regulations, imp_cntr):
+    def __init__(self, title, description, regulations, imp_cntr, imp_category):
         self.finding_type = "Forbedringspunkt"
         self.title = title
         self.description = description
         self.regulations = regulations
         self.imp_cntr = imp_cntr
-        #self.cathegory = cathegory
+        self.imp_category = imp_category
 
 ## Make soup of webpage
 def make_soup(url):
@@ -429,6 +429,29 @@ def find_improvement_regulations(improvement):
     return imp_regulation_list
 
 ## Function for extracting all the deviations and improvement points from the webpage of a report
+
+def category_prediction(description):
+    from sklearn.naive_bayes import MultinomialNB
+    from sklearn.feature_extraction.text import CountVectorizer
+    from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
+    import pandas as pd
+    # import csv
+
+
+    #Trained 23.04.2020
+    X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
+    y_train = pd.Series(pd.read_pickle("y_train.pkl")) #y_train fora "category"
+    print("Running prediction")
+    count_vect = CountVectorizer()
+    X_train_counts = count_vect.fit_transform(X_train)
+    tfidf_transformer = TfidfTransformer()
+    X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
+    clf = MultinomialNB().fit(X_train_tfidf, y_train)
+    clf = MultinomialNB().fit(X_train_tfidf, y_train)
+    predicted_category = clf.predict(count_vect.transform([description]))
+    print(predicted_category)
+    return predicted_category
+
 def find_relevant_info_on_web(webpage_as_soup, report):
 
     deviations = webpage_as_soup.find_all('div', attrs={"class":"tab-pane","id":re.compile('deviation.*')})
@@ -440,6 +463,9 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         dev_title = find_deviation_title(deviation)
         dev_text = find_deviation_text(deviation)
         dev_regulations = find_deviation_regulations(deviation)
+        dev_category = category_prediction(dev_text)
+        import numpy as np
+        dev_category = np.array2string(dev_category)
         dev_cntr += 1
 
         if dev_title == "":
@@ -447,7 +473,7 @@ def find_relevant_info_on_web(webpage_as_soup, report):
             return dev_cntr
 
 
-        new_deviation = Deviation(dev_title, dev_text, dev_regulations, dev_cntr)
+        new_deviation = Deviation(dev_title, dev_text, dev_regulations, dev_cntr, dev_category)
 
         report.deviation_list.append(new_deviation)
 
@@ -463,8 +489,11 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         imp_title = find_improvement_title(improvement)
         imp_text = find_improvement_text(improvement)
         imp_regulations = find_improvement_regulations(improvement)
+        imp_category = category_prediction(imp_text)
+        import numpy as np
+        imp_category = np.array2string(imp_category)
         imp_cntr += 1
-        new_improvement = Improvementpoint(imp_title, imp_text, imp_regulations, imp_cntr)
+        new_improvement = Improvementpoint(imp_title, imp_text, imp_regulations, imp_cntr, imp_category)
         #print("Improvement point title:")
         #print(new_improvement.title)
         #print("")
@@ -553,27 +582,7 @@ def main(report_url):
 
     #print("Successfully written database")
 
-    def category_prediction(description):
-        from sklearn.naive_bayes import MultinomialNB
-        from sklearn.feature_extraction.text import CountVectorizer
-        from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
-        import pandas as pd
-        # import csv
 
-
-        #Trained 23.04.2020
-        X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
-        y_train = pd.Series(pd.read_pickle("y_train.pkl")) #y_train fora "category"
-        print("Running prediction")
-        count_vect = CountVectorizer()
-        X_train_counts = count_vect.fit_transform(X_train)
-        tfidf_transformer = TfidfTransformer()
-        X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-        clf = MultinomialNB().fit(X_train_tfidf, y_train)
-        clf = MultinomialNB().fit(X_train_tfidf, y_train)
-        predicted_category = clf.predict(count_vect.transform([description]))
-        print(predicted_category)
-        return predicted_category
 
     # ## Printing the extracted information from the report ## MAYBE THIS IS NOT NEEDED ANYMORE.
     # print("URL for pdf:")
@@ -600,7 +609,7 @@ def main(report_url):
     """
 
     #the columns that will be used in the dataframe. 
-    deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)']
+    deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)', 'Kategori (avvik)']
     
     #construct the dataframe object
     df_deviation_list = pd.DataFrame(columns=deviation_columns)
@@ -621,7 +630,7 @@ def main(report_url):
         # report_list.append("Alle regelhenvisninger:")
         # report_list.append(test_dev.regulations)
         df_deviation_list = df_deviation_list.append({'Alle regelhenvisninger (avvik)' : test_dev.regulations}, ignore_index=True)
-
+        df_deviation_list = df_deviation_list.append({'Kategori (avvik)' : test_dev.dev_category}, ignore_index=True)
         if len(df_deviation_list.Avviksnummer.value_counts()) < 0: # a rule that check if there are no deivations. Something needs to be retured in the df, just to make it clearer for the user
             df_deviation_list = df_deviation_list.append({'Avviksnummer' : "N/A"}, ignore_index=True)
             # report_list.append("Tittel på avvik:")
@@ -662,13 +671,14 @@ def main(report_url):
         df_improvement_list = df_improvement_list.append({'Tittel på forbedringspunkt' : test_imp.title}, ignore_index=True)     
         df_improvement_list = df_improvement_list.append({'Forbedringens beskrivende tekst' : test_imp.description}, ignore_index=True)       
         df_improvement_list = df_improvement_list.append({'Alle regelhenvisninger (forbedring)' : test_imp.regulations}, ignore_index=True)
-        df_improvement_list = df_improvement_list.append({'Kategori (forbedringer)' : "category_prediction(test_imp.description)"}, ignore_index=True)
+        df_improvement_list = df_improvement_list.append({'Kategori (forbedringer)' : test_imp.imp_category}, ignore_index=True)
 
         if len(df_improvement_list.Forbedringspunkter.value_counts()) < 0: # a rule that check if there are no deivations. Something needs to be retured in the df, just to make it clearer for the user
             df_improvement_list = df_improvement_list.append({'Forbedringspunkter' : "N/A"}, ignore_index=True)       
             df_improvement_list = df_improvement_list.append({'Tittel på forbedringspunkt' : "N/A"}, ignore_index=True)   
             df_improvement_list = df_improvement_list.append({'Avvikets beskrivende tekst' : "Ingen forbedringspunkt funnet"}, ignore_index=True)       
             df_improvement_list = df_improvement_list.append({'Alle regelhenvisninger' : "Ingen forbedringspunkt funnet"}, ignore_index=True)
+            df_improvement_list = df_improvement_list.append({'Kategori (forbedringer)' : "N/A"}, ignore_index=True)
 
     
     df_improvement_list = pd.concat([df_improvement_list[i].dropna().reset_index(drop=True) for i in df_improvement_list], axis=1)
