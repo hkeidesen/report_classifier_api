@@ -322,8 +322,6 @@ def find_installation_and_type(report_intro):
             installation_name = key
             for key_owner in owner:
                 installation_owner = owner.get(key_owner)
-                     
-
             found = True
             break
     print("installation_name: ", installation_name, "installation_type: ",installation_type, "Installation_owner", installation_owner)
@@ -433,6 +431,7 @@ def find_improvement_regulations(improvement):
 # Function for predicting 
 def category_prediction(description):
     from sklearn.naive_bayes import MultinomialNB
+    from sklearn.svm import LinearSVC
     from sklearn.feature_extraction.text import CountVectorizer
     from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
     import pandas as pd
@@ -445,10 +444,14 @@ def category_prediction(description):
     X_train_counts = count_vect.fit_transform(X_train)
     tfidf_transformer = TfidfTransformer()
     X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
-    clf = MultinomialNB().fit(X_train_tfidf, y_train)
-    clf = MultinomialNB().fit(X_train_tfidf, y_train)
+    # model = MultinomialNB()
+    model = LinearSVC()
+    clf = model.fit(X_train_tfidf, y_train)
+    print(description)
     predicted_category = clf.predict(count_vect.transform([description]))
     # print(predicted_category)
+    # acc = clf.predict_proba((predicted_category.reshape(1,-1)))
+    # print(acc)
     return predicted_category
 
 def find_relevant_info_on_web(webpage_as_soup, report):
@@ -682,7 +685,19 @@ def main(report_url):
 
     print(total_number_of_findings)
     
-    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År", "Antall funn"]
+    general_report_columns = ['URL',
+                'Aktivitetsnummer',
+                'Rapporttittel',
+                'Dato',
+                'Oppgaveleder',
+                'Deltakere_i_revisjon', 
+                "Myndighet", 
+                "Tilsynslaget størrelse", 
+                "År", 
+                "Antall funn",
+                "Type installasjon",
+                "Installasjon",
+                "Operatør/eier"]
     df_general_report_stuff = pd.DataFrame(columns=general_report_columns)
     #print('the report url is (before the df): ', report.url)
     df_general_report_stuff = df_general_report_stuff.append({'URL' : report.url}, ignore_index=True)
@@ -695,6 +710,9 @@ def main(report_url):
     df_general_report_stuff = df_general_report_stuff.append({"Tilsynslaget størrelse": report.number_of_participants}, ignore_index = True)
     df_general_report_stuff = df_general_report_stuff.append({"År": report.year}, ignore_index = True)
     df_general_report_stuff = df_general_report_stuff.append({"Antall funn": total_number_of_findings}, ignore_index = True)
+    df_general_report_stuff = df_general_report_stuff.append({"Type installasjon": installation_type}, ignore_index = True)
+    df_general_report_stuff = df_general_report_stuff.append({"Installasjon (rigg eller installalasjon)": report.installation_name}, ignore_index = True)
+    df_general_report_stuff = df_general_report_stuff.append({"Operatør/eier": "TBA"}, ignore_index = True)
     #df_general_report_stuff = 1
 
     df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)

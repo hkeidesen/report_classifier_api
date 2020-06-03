@@ -95,7 +95,7 @@ def testing():
             df_json_improvements[index_improvements+1] = dict(row_improvements)
 
     # general report stuff
-    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År", "Antall funn"]
+    general_report_columns = ['URL','Aktivitetsnummer','Rapporttittel','Dato','Oppgaveleder','Deltakere_i_revisjon', "Myndighet", "Tilsynslaget størrelse", "År", "Antall funn", "Type installasjon", "Installasjon","Operatør/eier"]
     df_general = all_results[general_report_columns]
     # To avoid all the NaNs that are being created, df_general.head(1) is used to discard all rows containing NaN. 
     df_general = df_general.head(1)
