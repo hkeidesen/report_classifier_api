@@ -430,18 +430,17 @@ def find_improvement_regulations(improvement):
 
 ## Function for extracting all the deviations and improvement points from the webpage of a report
 
+# Function for predicting 
 def category_prediction(description):
     from sklearn.naive_bayes import MultinomialNB
     from sklearn.feature_extraction.text import CountVectorizer
     from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer
     import pandas as pd
-    # import csv
 
-
-    #Trained 23.04.2020
+    # Trained 23.04.2020
     X_train = pd.Series(pd.read_pickle("X_train.pkl")) #X_trin for "category"
     y_train = pd.Series(pd.read_pickle("y_train.pkl")) #y_train fora "category"
-    print("Running prediction")
+    # print("Running prediction")
     count_vect = CountVectorizer()
     X_train_counts = count_vect.fit_transform(X_train)
     tfidf_transformer = TfidfTransformer()
@@ -449,7 +448,7 @@ def category_prediction(description):
     clf = MultinomialNB().fit(X_train_tfidf, y_train)
     clf = MultinomialNB().fit(X_train_tfidf, y_train)
     predicted_category = clf.predict(count_vect.transform([description]))
-    print(predicted_category)
+    # print(predicted_category)
     return predicted_category
 
 def find_relevant_info_on_web(webpage_as_soup, report):
@@ -457,8 +456,7 @@ def find_relevant_info_on_web(webpage_as_soup, report):
     deviations = webpage_as_soup.find_all('div', attrs={"class":"tab-pane","id":re.compile('deviation.*')})
     dev_cntr = 0
 
-    #print("Here are the deviations:")
-    #print("")
+    # Finding deviations
     for deviation in deviations:
         dev_title = find_deviation_title(deviation)
         dev_text = find_deviation_text(deviation)
@@ -479,12 +477,11 @@ def find_relevant_info_on_web(webpage_as_soup, report):
 
         #report.deviation_list.append(dev_cntr)
 
-    #print("Number of deviations found: ", dev_cntr)
+    # Finding improvements
 
     improvements = webpage_as_soup.find_all('div', attrs={"class":"tab-pane","id":re.compile('improvementPoint.*')})
     imp_cntr = 0
-    #print("Here are the improvement points:")
-    #print("")
+
     for improvement in improvements:
         imp_title = find_improvement_title(improvement)
         imp_text = find_improvement_text(improvement)
@@ -494,26 +491,10 @@ def find_relevant_info_on_web(webpage_as_soup, report):
         imp_category = np.array2string(imp_category)
         imp_cntr += 1
         new_improvement = Improvementpoint(imp_title, imp_text, imp_regulations, imp_cntr, imp_category)
-        #print("Improvement point title:")
-        #print(new_improvement.title)
-        #print("")
-        #print("Improvement point explanatory text:")
-        #print(new_improvement.description)
-        #print("")
-        #print("All regulations:")
-        #print(new_improvement.regulations)
-        #print("----")
+ 
 
         report.improvement_list.append(new_improvement)
-
-        #print("Number of improvement points found: ", imp_cntr)
     return
-    #print("")
-
-
-        #CATEGORY PREDICTION
-
-
 
 def main(report_url):
     print("Running main()")
