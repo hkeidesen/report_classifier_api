@@ -734,7 +734,7 @@ def main(report_url):
     #df_general_report_stuff = 1
 
     df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
-    # df_general_report_stuff = df_general_report_stuff.dropna() # Carefull of this line. May kill functionallity
+    df_general_report_stuff = df_general_report_stuff.dropna() 
     print(df_general_report_stuff.head())
 
     #Report stuff

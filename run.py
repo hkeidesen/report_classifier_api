@@ -16,6 +16,11 @@ api = Api(app)
 def health():
     return ("200 OK")
 
+@app.route("/getURLS")
+def getURLS():
+    URLS = classifier.find_url_to_all_reportpages()
+    print("Running funciton to get all URLs.")
+
 @app.route("/classification", methods=["POST"])    
 def classification():
     status_code = 200
@@ -54,12 +59,12 @@ def testing():
     #deviations:
     deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)', 'Kategori (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py
     df_deviations = all_results[deviation_columns]
-    print(df_deviations)
+    # print(df_deviations)
     # this is done to remove NaN potential NaN entries
     df_json_deviations = {} # empty dict that will contain the resutls from 'result'
     # print(df_deviations)
     if df_deviations['Avviksnummer'].isnull().values.any():
-        print(df_deviations['Avviksnummer'].isnull().values.any())
+        # print(df_deviations['Avviksnummer'].isnull().values.any())
         print("no entries in dataframe (avvik, run.py)")
     else:
         number_of_deviation_points = int(df_deviations['Avviksnummer'].max())
@@ -78,7 +83,7 @@ def testing():
     # this line finds the number of improvement points, returned as an integer.
     df_json_improvements = {}
     if df_improvements.empty:#df_improvements['Forbedringspunkter'].isnull().values.any():
-        print(df_improvements['Forbedringspunkter'].isnull().values.any())
+        # print(df_improvements['Forbedringspunkter'].isnull().values.any())
         print("no entries in dataframe (forbedringspunkter, run.py)")
     else:
         number_of_improvements_points = int(df_improvements['Forbedringspunkter'].max())
@@ -111,6 +116,5 @@ def testing():
     return jsonify(avvik = df_json_deviations,
                 forbedringer = df_json_improvements,
                 generelt = df_json_general)
-
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
