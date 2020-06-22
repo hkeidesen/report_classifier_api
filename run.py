@@ -54,7 +54,9 @@ def testing():
     # working URL¨
     # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/') #link ok
     # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/neptune--gjoa--palegg-etter-tilsyn-med-vedlikeholdsstyring/')
-    all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/okea-draugen-materialhandtering-kran-og-loft-arbeid-i-hoyden-og-arbeidsmiljo/')
+    all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/teekay-petrojarl-production-as--petrojarl-knarr---elektriske-anlegg-instrumenterte-sikkerhetssystemer-og-teknisk-sikkerhet/')
+    
+    #all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/okea-draugen-materialhandtering-kran-og-loft-arbeid-i-hoyden-og-arbeidsmiljo/')
     # print('the dataframe looks like this: ', all_results)
     #deviations:
     deviation_columns = ['Avviksnummer','Tittel på avvik','Avvikets beskrivende tekst','Alle regelhenvisninger (avvik)', 'Kategori (avvik)'] # this is identical to the columns constructed for the deviations list in classifier.py

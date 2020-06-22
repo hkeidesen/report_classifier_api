@@ -194,6 +194,14 @@ def find_url_to_all_reportpages():
 
 
 def convert_pdf_to_txt(pdf_url):
+    """ A funciton to convert a PDF to text/string
+
+    Args:
+        pdf_url ([string]): returns a string object of the pdf that is currently being evaluated. this string is furhter processd and classified based on the keywords
+
+    Returns:
+        [type]: [string]
+    """
 
     rsrcmgr = PDFResourceManager()
     retstr = StringIO()
@@ -236,7 +244,14 @@ def convert_pdf_to_txt(pdf_url):
 
 ## Function for finding participants in revision team
 def find_participants_in_revision(idx, report_text):
+    """A function to find the participants in the revision
+    Args:
+        idx ([int]): []
+        report_text ([type]): [description]
 
+    Returns:
+        [type]: [description]
+    """
     idx += -1
 
     while report_text[idx] != " " and report_text[idx] != "":
@@ -325,13 +340,16 @@ def find_introduction(idx, report_text):
 
 ## Function for finding installation type
 def find_installation_and_type(report_intro):
-
+    # loading the owner dictionay to df, which will make further work easier
+    df_owner = pd.DataFrame({"owner":owner})
+    df_installations = pd.DataFrame({"installations":Installations})
+    print(df_owner)
     for key in Installations:
         if key in report_intro:
             installation_type = Installations.get(key)
             installation_name = key
-            for key_owner in owner:
-                installation_owner = owner.get(key_owner)
+            # installation_owner = df_owner.merge(df_installations, on=installation_name)
+            installation_owner = "N/A"
             found = True
             break
     print("installation_name: ", installation_name, "installation_type: ",installation_type, "Installation_owner", installation_owner)
@@ -368,7 +386,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
 
         if bool(re.compile('1\s+').match(line)):
             intro = find_introduction(idx, report_as_a_list_of_sentences)
-            installation_name, installation_type, Installation_owner = find_installation_and_type(intro)
+            installation_name, installation_type, operator = find_installation_and_type(intro)
 
         if "Myndighet" in line:
             myndighet = find_myndighet(idx, report_as_a_list_of_sentences)
@@ -381,7 +399,7 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         #     csv_writer.writerow(report_as_a_list_of_sentences)
 
         total_number_of_findings = 0
-        operator = ""
+        
 
     return participants_in_revision, taskleader, activity_number, date, title, installation_name, installation_type, myndighet, number_of_participants, total_number_of_findings, operator
 
@@ -730,7 +748,7 @@ def main(report_url):
     df_general_report_stuff = df_general_report_stuff.append({"Antall funn": total_number_of_findings}, ignore_index = True)
     df_general_report_stuff = df_general_report_stuff.append({"Type installasjon": installation_type}, ignore_index = True)
     df_general_report_stuff = df_general_report_stuff.append({"Installasjon (rigg eller installalasjon)": report.installation_name}, ignore_index = True)
-    df_general_report_stuff = df_general_report_stuff.append({"Operatør/eier": "TBA"}, ignore_index = True)
+    df_general_report_stuff = df_general_report_stuff.append({"Operatør/eier": report.operator}, ignore_index = True)
     #df_general_report_stuff = 1
 
     df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
