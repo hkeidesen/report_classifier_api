@@ -95,6 +95,8 @@ def find_pdf_url_on_webpage(soup):
                 print("The report link has been obtained. Proceeding")
             else:
                 print("There was an error getting the report link. Are you sure that the provided link contains a PDF-file?")
+                report_link = input("Please provide the PDF-link to the report: ")
+                report_link = report_link.replace('https://www.ptil.no/', '')
                 print(report_link)
             return report_link
     return "https://www.ptil.no/" + report_link
@@ -218,7 +220,7 @@ def convert_pdf_to_txt(pdf_url):
 
     except (http.client.IncompleteRead) as e:
         f = e.partial
-        print(datetime.now())
+        # print(datetime.now())
     #f = urlopen(pdf_url).read()
 
     # f = requestObj
@@ -258,12 +260,20 @@ def find_participants_in_revision(idx, report_text):
         participants_in_revision = ""
         participants_in_revision += report_text[idx]
         idx += 1
-        # print("report_text[",idx,"]= ", report_text[idx])
-    print("The parcticipants were: ", participants_in_revision)
+        # print("report_text[",idx,"] = ", report_text[idx])
+    # print("The parcticipants were: ", participants_in_revision)
     if "," not in participants_in_revision: # This check is to remedy the case when the there are too many participants to fit all of them in one line, casue that case will only return the last entry.
-        print("There are too few participants...")
+        # print("There are too few participants...")
         participants_in_revision = ""
         participants_in_revision = report_text[20] + report_text[21] # these numbers are identificed by running print("report_text[",idx,"]= ", report_text[idx])
+        if sum(map(str.isupper, participants_in_revision)) <= 3: # In some cases the idx identies the wrong participants, and the. This rule checs whether the returned string has less than 3 uppercase letters, which can signify that something is not right
+            participants_in_revision = ""
+            participants_in_revision += report_text[idx]
+            idx += 1
+            # print("report_text[",idx,"] = ", report_text[idx])
+            participants_in_revision = report_text[24] + report_text[25] # based on running print("report_text[",idx,"]= ", report_text[idx]), the correct indexes has been identified
+            
+            # print(participants_in_revision) 
     return participants_in_revision
 
 ## Function for finding task leader
@@ -277,7 +287,15 @@ def find_taskleader(idx, report_text):
 
 ## Function for finding report title
 def find_report_title(idx, report_text):
-    
+    """A function to find the report text
+
+    Args:
+        idx ([type]): [description]
+        report_text ([type]): [description]
+
+    Returns:
+        [type]: [description]
+    """
     
     idx += -1 # Trying with idx += -1
 
@@ -285,8 +303,10 @@ def find_report_title(idx, report_text):
         report_title = ""
         report_title += report_text[idx]
         idx += 1
+        # print("report_text[",idx,"]= ", report_text[idx])
     #print("The report title is: " + report_title)
         if report_title[0].isupper(): # A check to see if the title has been cut-off. See comment below on how this was fixed (a valid title would have an upper-case as first letter)
+            
             continue
         else:
             report_title = ""
@@ -294,6 +314,7 @@ def find_report_title(idx, report_text):
             # The reason the report_text[9] and [10] are used is because if the title of the report is on two lines of code, the code will only report the last line of the title.
             # These sepcific numbers have been found by printing the idx, identify what idx gives the report title, and then assigning these numbers manually. If the idx changes (where idx is initially assigned above),
             # it is possible that the two values needs changig also.
+            # print("report_text[",idx,"]= ", report_text[idx])
             report_title = report_text[9] + report_text[10] # If, for some reason, the index 9 and 10 needs to change in the future, execute print("report_text[",idx,"]= ", report_text[idx]) 
     return report_title
 
@@ -328,22 +349,25 @@ def find_date(idx, report_text):
 ## Function for finding the introduction text
 def find_introduction(idx, report_text):
 
-    idx += 1
+    idx += 0
     report_intro = ""
+    try:
+        while not re.compile('2\s+').match(report_text[idx]):
+            print(report_text[idx])
+            report_intro += report_text[idx]
+            idx +=1
 
-    while not re.compile('2\s+').match(report_text[idx]):
-
-        report_intro += report_text[idx]
-        idx +=1
-
-    return report_intro
+        return report_intro
+    except:
+        report_intro = "Not found"
+        return report_intro
 
 ## Function for finding installation type
 def find_installation_and_type(report_intro):
     # loading the owner dictionay to df, which will make further work easier
     df_owner = pd.DataFrame({"owner":owner})
     df_installations = pd.DataFrame({"installations":Installations})
-    print(df_owner)
+    # print(df_owner)
     for key in Installations:
         if key in report_intro:
             installation_type = Installations.get(key)
@@ -352,7 +376,11 @@ def find_installation_and_type(report_intro):
             installation_owner = "N/A"
             found = True
             break
-    print("installation_name: ", installation_name, "installation_type: ",installation_type, "Installation_owner", installation_owner)
+        if not key in report_intro:
+            installation_type = "Not found"
+            installation_name = "Not found"
+            installation_owner = "N/A"
+    #print("installation_name: ", installation_name, "installation_type: ",installation_type, "Installation_owner", installation_owner)
 
     return installation_name, installation_type, installation_owner
 
@@ -375,8 +403,8 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         if "Dato" in line:
             date = find_date(idx, report_as_a_list_of_sentences)
             year = date[-5:] #returns the years from the date (the structre of the date here is very important!!!!)
-            print(date)
-            print(year)
+            # print(date)
+            # print(year)
         if "Rapporttittel" in line:
             title = find_report_title(idx, report_as_a_list_of_sentences)
             if title[0].isupper(): # This code block can be deleted, as it is possible that the title will no longer be cut off
@@ -399,7 +427,6 @@ def find_relevant_info_in_pdf(report_as_a_list_of_sentences):
         #     csv_writer.writerow(report_as_a_list_of_sentences)
 
         total_number_of_findings = 0
-        
 
     return participants_in_revision, taskleader, activity_number, date, title, installation_name, installation_type, myndighet, number_of_participants, total_number_of_findings, operator
 
@@ -475,7 +502,7 @@ def category_prediction(description):
     # model = MultinomialNB()
     model = LinearSVC()
     clf = model.fit(X_train_tfidf, y_train)
-    print(description)
+    # print(description)
     predicted_category = clf.predict(count_vect.transform([description]))
     # print(predicted_category)
     # acc = clf.predict_proba((predicted_category.reshape(1,-1)))
@@ -551,11 +578,6 @@ def main(report_url):
     #url_to_report = test_url
 
 
-    """
-    There has been some kind of restructuring in PTILs website, and the corrent URL reading code
-    does not work correctly. This needs to be fixed ASAP!
-    ######url = "https://www.ptil.no/tilsyn/tilsynsrapporter/" +  report_url # THIS URL ONLY WORKS ONE SOME REPORTS!!!
-    """
     url = report_url
     print("The url is: " + url)
 
@@ -647,7 +669,8 @@ def main(report_url):
         # report_list.append(test_dev.regulations)
         df_deviation_list = df_deviation_list.append({'Alle regelhenvisninger (avvik)' : test_dev.regulations}, ignore_index=True)
         df_deviation_list = df_deviation_list.append({'Kategori (avvik)' : test_dev.dev_category}, ignore_index=True)
-        if len(df_deviation_list.Avviksnummer.value_counts()) < 0: # a rule that check if there are no deivations. Something needs to be retured in the df, just to make it clearer for the user
+        #print(df_deviation_list)
+        if df_deviation_list.empty: # a rule that check if there are no deivations. Something needs to be retured in the df, just to make it clearer for the user
             df_deviation_list = df_deviation_list.append({'Avviksnummer' : "N/A"}, ignore_index=True)
             # report_list.append("Tittel på avvik:")
             # report_list.append(test_dev.title)        
@@ -675,7 +698,7 @@ def main(report_url):
     #
     # The following code will clean this, so that the "avviksnummer" matches the title, description and regulation at the same index
     df_deviation_list = pd.concat([df_deviation_list[x].dropna().reset_index(drop=True) for x in df_deviation_list], axis=1)
-    #print(df_deviation_list)
+    # print(df_deviation_list)
 
         
 
@@ -703,7 +726,6 @@ def main(report_url):
     
     df_improvement_list = pd.concat([df_improvement_list[i].dropna().reset_index(drop=True) for i in df_improvement_list], axis=1)
     df_improvement_list = df_improvement_list.dropna()
-    # print(df_improvement_list)
     # transforming to pandas dataframe to then it to convert json
    
     # df =  pd.DataFrame(report_list)
@@ -753,78 +775,36 @@ def main(report_url):
 
     df_general_report_stuff = pd.concat([df_general_report_stuff[i].dropna().reset_index(drop=True) for i in df_general_report_stuff], axis=1)
     # df_general_report_stuff = df_general_report_stuff.dropna() # Carefull of this line. May kill functionallity
-    print(df_general_report_stuff.head())
+    # print(df_general_report_stuff.head())
 
-    #Report stuff
-    url = json.dumps(report.url)
-    activity_number = json.dumps(report.activity_number)
-    title = json.dumps(report.title)
-    date = json.dumps(report.date)
-    taskleader = json.dumps(report.taskleader)
-    participants_in_revision = json.dumps(report.participants_in_revision)
+    # #Report stuff
+    # url = json.dumps(report.url)
+    # activity_number = json.dumps(report.activity_number)
+    # title = json.dumps(report.title)
+    # date = json.dumps(report.date)
+    # taskleader = json.dumps(report.taskleader)
+    # participants_in_revision = json.dumps(report.participants_in_revision)
 
-    if not report.installation_name:
-        installation_name = json.dumps("Navn på installasjon ikke funnet.")
-        installation_type = json.dumps(report.installation_type)
+    # if not report.installation_name:
+    #     installation_name = json.dumps("Navn på installasjon ikke funnet.")
+    #     installation_type = json.dumps(report.installation_type)
+    # else:
+    #     installation_name = json.dumps(report.installation_name)
+    #     installation_type = json.dumps(report.installation_type)
+
+    # myndighet = json.dumps("PTIL")
+
+    
+
+    # Returning the results as a Pandas DataFrame
+    if df_deviation_list.empty: # It is important which order the join comes in, and if the wrong DF is joined first, nothing will be returned. 
+        df_all_results = df_improvement_list.join(df_deviation_list)
+        df_all_results = df_all_results.join(df_general_report_stuff)
+        df_all_results.to_excel('results.xlsx')
     else:
-        installation_name = json.dumps(report.installation_name)
-        installation_type = json.dumps(report.installation_type)
-
-    myndighet = json.dumps("PTIL")
-
-    #Avvik-stuff'
-    # print(df_deviation_list['Avviksnummer'].iloc[-1])
-    if df_deviation_list['Avviksnummer'].iloc[-1] == 1:
-        if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
-            title_on_deviation = json.dumps("Ingen avvik funnet")
-            dev_description = json.dumps("Ingen avvik funnet")
-            number_of_deviations = json.dumps("0")
-            dev_regulations = json.dumps("N/A")
-        else:
-            title_on_deviation = json.dumps(test_dev.title)
-            dev_description = json.dumps(test_dev.description)
-            number_of_deviations = json.dumps(test_dev.dev_cntr)
-            dev_regulations = json.dumps(test_dev.regulations)
-    else:
-        print("Using the constructed dataframe to write to JSON")
-        #df_json = df_deviation_list.set_index('Avviksnummer').T.to_dict('list')
-        # df_json = json.dumps(df_json)
-        # df_josn = {}
-        # for key, df_gb in df_deviation_list.groupby('Avviksnummer'):
-        #     df_josn[(key)] = df_gb.to_dict('records')
-        # df_json = json.dumps(df_josn, indent=1)
-        # print(df_json)
-        
-        if not report.deviation_list: #If the deviation list is empty, it means that there are not deviations found.
-            title_on_deviation = json.dumps("Ingen avvik funnet")
-            dev_description = json.dumps("Ingen avvik funnet")
-            number_of_deviations = json.dumps("0")
-            dev_regulations = json.dumps("N/A")
-        else:
-            title_on_deviation = json.dumps(test_dev.title)
-            dev_description = json.dumps(test_dev.description)
-            number_of_deviations = json.dumps(test_dev.dev_cntr)
-            dev_regulations = json.dumps(test_dev.regulations)
-    # print("the title of imp is: ", report.__str__)
-
-
-    #Improvement-stuff
-    #print("the title of dev is: ", title_on_deviation)
-    if not report.improvement_list: #if improvement list is empty, the below will be executed
-        title_on_improvement = json.dumps("Ingen forbedringspunkter funnet")
-        imp_description = json.dumps("Ingen forbedringspunkt funnet")
-        total_number_of_improvements = json.dumps("0")
-        imp_regulations = json.dumps("N/A")
-    else:
-        total_number_of_improvements = json.dumps(test_imp.imp_cntr)
-        title_on_improvement = json.dumps(test_imp.title)
-        imp_description = json.dumps(test_imp.description)
-        imp_regulations = json.dumps(test_imp.regulations)
-    #print("the title of imp is: ", report.improvement_list)
-
-    # Returning the results as a Pandas DataFrame    
-    df_all_results = df_deviation_list.join(df_improvement_list)
-    df_all_results = df_all_results.join(df_general_report_stuff)
-    df_all_results.to_excel('results.xlsx')
+        df_all_results = df_deviation_list.join(df_improvement_list)
+        df_all_results = df_all_results.join(df_general_report_stuff)
+        df_all_results.to_excel('results.xlsx')
     # print(df_general_report_stuff)
+    # print(df_all_results)
     return df_all_results

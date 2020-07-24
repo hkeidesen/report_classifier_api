@@ -55,7 +55,7 @@ def testing():
     # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/sut-tilsyn-seadrill-west-bollsta-logistikk/') #link ok
     # all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/neptune--gjoa--palegg-etter-tilsyn-med-vedlikeholdsstyring/')
     all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/teekay-petrojarl-production-as--petrojarl-knarr---elektriske-anlegg-instrumenterte-sikkerhetssystemer-og-teknisk-sikkerhet/')
-    
+    # all_results = classifier.main(flask.request.args.get('id'))
     #all_results = classifier.main('https://www.ptil.no/tilsyn/tilsynsrapporter/2020/okea-draugen-materialhandtering-kran-og-loft-arbeid-i-hoyden-og-arbeidsmiljo/')
     # print('the dataframe looks like this: ', all_results)
     #deviations:
@@ -64,8 +64,8 @@ def testing():
     # print(df_deviations)
     # this is done to remove NaN potential NaN entries
     df_json_deviations = {} # empty dict that will contain the resutls from 'result'
-    # print(df_deviations)
-    if df_deviations['Avviksnummer'].isnull().values.any():
+    
+    if df_deviations['Avviksnummer'].isnull().values.any() or df_deviations['Avviksnummer'].empty:
         # print(df_deviations['Avviksnummer'].isnull().values.any())
         print("no entries in dataframe (avvik, run.py)")
     else:
@@ -84,10 +84,12 @@ def testing():
 
     # this line finds the number of improvement points, returned as an integer.
     df_json_improvements = {}
-    if df_improvements.empty:#df_improvements['Forbedringspunkter'].isnull().values.any():
+    import math
+    if df_improvements.isnull().values.any() or df_improvements['Forbedringspunkter'].empty  :#df_improvements['Forbedringspunkter'].isnull().values.any():
         # print(df_improvements['Forbedringspunkter'].isnull().values.any())
         print("no entries in dataframe (forbedringspunkter, run.py)")
     else:
+        
         number_of_improvements_points = int(df_improvements['Forbedringspunkter'].max())
 
         # print("the number of imp points are:", number_of_improvements_points)
